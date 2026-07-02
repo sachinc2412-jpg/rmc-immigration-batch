@@ -71,6 +71,14 @@
   }
 
   .header-stats { display:none; }
+  .header-backup { display:flex; gap:8px; margin-left:auto; }
+  .backup-btn {
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    padding:8px 14px; border-radius:var(--radius-xs); border:1px solid var(--border);
+    background:var(--surface2); color:var(--ink-mid); font-family:'Inter',sans-serif;
+    font-size:12.5px; font-weight:500; transition:all .15s;
+  }
+  .backup-btn:hover { border-color:var(--gold); color:var(--gold-dark); background:var(--gold-dim); }
   .hstat { text-align:right; }
   .hstat-num {
     font-family:'Inter',sans-serif; font-size:18px; font-weight:700;
@@ -80,27 +88,44 @@
 
   /* ── TABS ── */
   .tabs {
-    display:flex; gap:2px; margin-bottom:28px;
-    background: var(--surface2);
+    display:flex; flex-direction:row; gap:4px;
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding:3px; width:fit-content;
+    border-radius: var(--radius);
+    padding:6px; width:fit-content;
+    position:fixed; right:14px; bottom:10px; z-index:80;
+    box-shadow: var(--shadow-lg);
   }
   .tab {
-    padding:7px 16px; border-radius:6px;
+    padding:9px 18px; border-radius:8px;
     font-size:13px; font-weight:500; cursor:pointer;
     border:none; background:transparent; color:var(--ink-muted);
-    transition:all .15s; letter-spacing:0;
+    transition:all .15s; letter-spacing:0; text-align:left;
     font-family:'Inter',sans-serif;
+    display:flex; align-items:center; gap:8px;
   }
-  .tab:hover { color:var(--ink); }
+  .tab:hover { color:var(--ink); background:var(--surface2); }
   .tab.active {
-    background: var(--surface);
-    color: var(--charcoal); font-weight:600;
-    box-shadow: 0 1px 2px rgba(20,20,20,0.08), 0 0 0 1px var(--border);
+    background: var(--gold);
+    color: #fff; font-weight:600;
   }
+  .tab.active:hover { background:var(--gold-dark); color:#fff; }
 
-  .page { display:none; } .page.active { display:block; }
+  /* Spacer so page content doesn't sit under the floating nav */
+  .app { padding-bottom:100px; }
+
+  .page { display:none; }
+  .page.active, .page.exiting { display:block; }
+  .page.entering { animation: pageEnter .16s ease-out; }
+  .page.exiting  { animation: pageExit .12s ease-in forwards; }
+  @keyframes pageEnter {
+    from { opacity:0; transform:translateY(6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes pageExit {
+    from { opacity:1; transform:translateY(0); }
+    to   { opacity:0; transform:translateY(-4px); }
+  }
 
   /* ── SHARED FORM ── */
   .main-grid { display:grid; grid-template-columns:430px 1fr; gap:28px; align-items:start; }
@@ -177,8 +202,9 @@
     width:9px; height:9px; border-radius:50%; pointer-events:none; transition:background .2s;
   }
 
+  .form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:4px; }
   .submit-btn {
-    width:100%; padding:10px; border:none; border-radius:var(--radius-xs);
+    width:auto; padding:10px 22px; border:none; border-radius:var(--radius-xs);
     background: var(--gold);
     color:#fff; font-family:'Inter',sans-serif; font-weight:600;
     font-size:13.5px; letter-spacing:0; cursor:pointer;
@@ -189,7 +215,7 @@
   .submit-btn:active { transform:scale(.99); }
 
   .btn-ghost {
-    width:100%; padding:10px; border-radius:var(--radius-xs);
+    width:auto; padding:10px 18px; border-radius:var(--radius-xs);
     border:1px solid var(--border); background:transparent;
     color:var(--ink-muted); cursor:pointer; font-size:13px;
     font-family:'Inter',sans-serif; transition:all .2s;
@@ -533,12 +559,12 @@
 
   /* ── TOAST ── */
   .toast {
-    position:fixed; bottom:28px; right:28px; z-index:999;
+    position:fixed; top:22px; right:28px; z-index:999;
     background:#fff; border:1.5px solid var(--gold-line);
     padding:12px 20px; border-radius:var(--radius-sm);
     font-size:13px; color:var(--ink);
     display:flex; align-items:center; gap:10px;
-    transform:translateY(20px); opacity:0; transition:all .3s; pointer-events:none;
+    transform:translateY(-16px); opacity:0; transition:all .3s; pointer-events:none;
     box-shadow: var(--shadow);
   }
   .toast.show { transform:translateY(0); opacity:1; }
@@ -594,6 +620,13 @@
     <div class="logo">
       <img src="logo.png" alt="RMC Logo">
       <div class="logo-text"><h1>Relocate Management Consultancies</h1><p>Immigration Batch Manager</p></div>
+    </div>
+    <div class="header-backup">
+      <button class="backup-btn" onclick="exportData()" title="Download all data as a portable JSON file"><svg class="ic" viewBox="0 0 16 16"><path d="M2.5 2h8l3 3v9h-11z"/><path d="M4.7 2v4h5.6V2"/><rect x="4.7" y="9" width="5.6" height="4"/></svg> Backup Data</button>
+      <label class="backup-btn" title="Restore data from a previously exported backup file">
+        <svg class="ic" viewBox="0 0 16 16"><path d="M1 8s2.7-4.8 7-4.8S15 8 15 8s-2.7 4.8-7 4.8S1 8 1 8z"/><circle cx="8" cy="8" r="1.9"/></svg> Restore Backup
+        <input type="file" accept="application/json,.json" style="display:none" onchange="importDataFile(this)">
+      </label>
     </div>
     <div class="header-stats">
       <div class="hstat"><div class="hstat-num" id="stat-total">0</div><div class="hstat-label">Total</div></div>
@@ -690,8 +723,10 @@
             </div>
           </div>
           <div class="form-group full"><label>Notes / Remarks</label><textarea id="f-notes" placeholder="Any additional notes..."></textarea></div>
-          <button class="submit-btn" onclick="submitForm()"><span id="submit-icon"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg></span><span id="submit-label">Add Client</span></button>
-          <button class="btn-ghost" id="cancel-edit-btn" style="display:none;" onclick="cancelEdit()">Cancel Edit</button>
+          <div class="form-actions">
+            <button class="btn-ghost" id="cancel-edit-btn" style="display:none;" onclick="cancelEdit()">Cancel Edit</button>
+            <button class="submit-btn" onclick="submitForm()"><span id="submit-icon"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg></span><span id="submit-label">Add Client</span></button>
+          </div>
         </div>
       </div>
       <div id="edit-preview-panel" style="display:none;"></div>
@@ -706,14 +741,16 @@
           <div class="panel-header"><h2>Add Agent</h2><span class="panel-badge">New Agent</span></div>
           <div class="agent-form-body">
             <div class="form-group"><label>Agent Name *</label><input type="text" id="ag-name" placeholder="e.g. Sarah Johnson"></div>
-            <div class="form-group"><label>Region / Location</label><input type="text" id="ag-region" placeholder="e.g. Dubai, UAE"></div>
+            <div class="form-group"><label>Country</label><div class="cdd" id="ag-country-wrap"></div></div>
             <div class="section-divider"><svg class="ic" viewBox="0 0 16 16"><rect x="1.4" y="1.4" width="5.2" height="5.2"/><rect x="9.4" y="1.4" width="5.2" height="5.2"/><rect x="1.4" y="9.4" width="5.2" height="5.2"/><rect x="9.4" y="9.4" width="5.2" height="5.2"/></svg> Slots</div>
             <div class="form-row">
               <div class="form-group"><label>Total Slots</label><input type="number" id="ag-total" placeholder="e.g. 20" min="0"></div>
               <div class="form-group"><label>Slots Used</label><input type="number" id="ag-used" placeholder="e.g. 8" min="0"></div>
             </div>
             <div class="form-group"><label>Notes</label><input type="text" id="ag-notes" placeholder="Any notes about this agent..."></div>
-            <button class="submit-btn" onclick="addAgent()" style="margin-top:4px;"><span><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg></span> Add Agent</button>
+            <div class="form-actions">
+              <button class="submit-btn" onclick="addAgent()"><span><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg></span> Add Agent</button>
+            </div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;">
@@ -1033,6 +1070,16 @@ COUNTRIES.forEach(([name, demonym, iso2]) => {
   COUNTRY_CODES[name.toLowerCase()] = iso2;
   COUNTRY_CODES[demonym.toLowerCase()] = iso2;
 });
+// Common abbreviations/aliases seen in legacy free-text data, not covered by the
+// name/demonym pairs above. Extend this if more mismatches turn up.
+Object.assign(COUNTRY_CODES, {
+  'uk':'GB', 'u.k.':'GB', 'england':'GB', 'english':'GB', 'scotland':'GB', 'scottish':'GB',
+  'wales':'GB', 'welsh':'GB', 'northern ireland':'GB', 'great britain':'GB',
+  'uae':'AE', 'u.a.e.':'AE', 'usa':'US', 'u.s.a.':'US', 'u.s.':'US', 'america':'US',
+  'holland':'NL', 'south korea':'KR', 'republic of korea':'KR', 'north korea':'KP',
+  'ivory coast':'CI', "cote d'ivoire":'CI', 'burma':'MM', 'czech republic':'CZ',
+  'macedonia':'MK', 'swaziland':'SZ', 'russian federation':'RU'
+});
 
 function iso2ToFlag(iso2){
   return iso2.toLowerCase();
@@ -1085,6 +1132,7 @@ function populateAllCountrySelects(){
   buildDropdown('f-country', 'name');
   buildDropdown('ac-nationality', 'demonym');
   buildDropdown('ac-country', 'name');
+  buildDropdown('ag-country', 'name');
 }
 
 function toggleDropdown(id){
@@ -1178,6 +1226,46 @@ const ICONS = {
   function saveAgents()       { localStorage.setItem('rmc_agents_v1',        JSON.stringify(agents)); }
   function saveAgentClients() { localStorage.setItem('rmc_agent_clients_v1', JSON.stringify(agentClients)); }
 
+  // ── BACKUP / RESTORE ─────────────────────────────────────────────────
+  // localStorage on file:// pages is scoped to the exact file path. Every time
+  // this file is re-saved/downloaded to a different path, it's a fresh empty
+  // storage bucket — old data isn't deleted, just unreachable from the new file.
+  // Export/Import makes the data portable across files instead of trapped in one.
+  function exportData(){
+    const payload = { clients, agents, agentClients, exportedAt: new Date().toISOString(), version: 1 };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'rmc-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(ICONS.checkcircle, 'Backup downloaded');
+  }
+
+  function importDataFile(input){
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      let data;
+      try { data = JSON.parse(e.target.result); }
+      catch(err){ showToast(ICONS.alert, 'Invalid backup file'); input.value=''; return; }
+      if(!data || !Array.isArray(data.clients)){ showToast(ICONS.alert, 'Not a valid RMC backup file'); input.value=''; return; }
+      const count = data.clients.length;
+      if(!confirm(`Import ${count} client record(s)? This will REPLACE all data currently in this file (not merge).`)){ input.value=''; return; }
+      clients = data.clients || [];
+      agents = data.agents || [];
+      agentClients = data.agentClients || {};
+      saveClients(); saveAgents(); saveAgentClients();
+      renderCards(); updateStats(); renderAgents();
+      showToast(ICONS.checkcircle, count+' client record(s) restored');
+      input.value='';
+    };
+    reader.readAsText(file);
+  }
+
+
   const STATUS_MAP = {
     review:    {label:'Under Review',               dot:'#7b5ea7'},
     eligible:  {label:'Eligible — 1st Pay Pending', dot:'#c4621d'},
@@ -1194,10 +1282,17 @@ const ICONS = {
 
   // ── PAGE ──────────────────────────────────────────────────────────────
   function showPage(p) {
-    document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-    document.getElementById('page-'+p).classList.add('active');
+    const target = document.getElementById('page-'+p);
+    const current = document.querySelector('.page.active');
     document.querySelectorAll('.tab').forEach((el,i)=>
       el.classList.toggle('active',['clients','add','agents'][i]===p));
+    if(current && current!==target){
+      current.classList.remove('active');
+      current.classList.add('exiting');
+      setTimeout(()=>current.classList.remove('exiting'), 130);
+    }
+    target.classList.add('active','entering');
+    setTimeout(()=>target.classList.remove('entering'), 170);
     if(p==='clients'){populateAgentFilter();renderCards();}
     if(p==='add')    {populateAgentDropdown();}
     if(p==='agents') {renderAgents();}
@@ -1383,9 +1478,11 @@ const ICONS = {
     if(!name){showToast(ICONS.alert,'Please enter agent name');return;}
     const total=parseInt(document.getElementById('ag-total').value)||0;
     const used=parseInt(document.getElementById('ag-used').value)||0;
-    agents.unshift({id:Date.now().toString(),name,region:document.getElementById('ag-region').value.trim(),notes:document.getElementById('ag-notes').value.trim(),total,used,date:new Date().toISOString()});
+    const region=document.getElementById('ag-country').value.trim();
+    agents.unshift({id:Date.now().toString(),name,region,notes:document.getElementById('ag-notes').value.trim(),total,used,date:new Date().toISOString()});
     saveAgents();
-    ['ag-name','ag-region','ag-total','ag-used','ag-notes'].forEach(id=>document.getElementById(id).value='');
+    ['ag-name','ag-total','ag-used','ag-notes'].forEach(id=>document.getElementById(id).value='');
+    resetCountryDropdown('ag-country');
     showToast(ICONS.checkcircle,name+' added as agent');renderAgents();
   }
 
