@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMC — Immigration Batch Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Neutral, clean palette — Linear/Notion/Apple inspired */
+    --bg:        #fbfbfa;
+    --bg-alt:    #f4f4f3;
+    --surface:   #ffffff;
+    --surface2:  #f8f8f7;
+    --charcoal:  #1a1a1a;
+    --ink:       #24292e;
+    --ink-mid:   #57606a;
+    --ink-muted: #8b909a;
+    --gold:      #1f2f8c;
+    --gold-dark: #16215e;
+    --gold-light:#5865c7;
+    --gold-dim:  rgba(31,47,140,0.08);
+    --gold-line: rgba(31,47,140,0.22);
+    --border:    #e8e8e6;
+    --border-strong: #d3d3d0;
+    --shadow-sm: 0 1px 2px rgba(20,20,20,0.04);
+    --shadow:    0 2px 8px rgba(20,20,20,0.06), 0 1px 2px rgba(20,20,20,0.04);
+    --shadow-lg: 0 16px 48px rgba(20,20,20,0.12), 0 2px 8px rgba(20,20,20,0.06);
+    --c-purple: #6b4fbb; --c-purple-bg: #f2effa;
+    --c-orange: #b5610f; --c-orange-bg: #fbf1e6;
+    --c-blue:   #1a6ed8; --c-blue-bg:   #eaf2fd;
+    --c-teal:   #1a7a72; --c-teal-bg:   #e9f6f4;
+    --c-green:  #1a7a4c; --c-green-bg:  #e9f7ef;
+    --c-red:    #c13a3a; --c-red-bg:    #fbedec;
+    --radius:    10px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family:'Inter',sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app { position:relative; z-index:1; max-width:1440px; margin:0 auto; padding:0 28px 80px; }
+
+  /* ── HEADER ── */
+  header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:28px 0 24px;
+    border-bottom: 1.5px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .logo { display:flex; align-items:center; gap:16px; }
+  .logo img { height:56px; width:auto; object-fit:contain; border-radius:8px; }
+  .logo-text h1 {
+    font-family:'Inter', sans-serif;
+    font-size:19px; font-weight:800;
+    color: var(--charcoal); letter-spacing:-0.01em;
+  }
+  .logo-text p {
+    font-size:14px; color:var(--ink-muted);
+    letter-spacing:0.01em; margin-top:2px;
+    font-weight:400;
+  }
+
+  .header-stats { display:none; }
+  .hstat { text-align:right; }
+  .hstat-num {
+    font-family:'Inter',sans-serif; font-size:18px; font-weight:700;
+    color:var(--charcoal); line-height:1.1;
+  }
+  .hstat-label { font-size:10.5px; color:var(--ink-muted); letter-spacing:0.01em; margin-top:3px; font-weight:400; }
+
+  /* ── TABS ── */
+  .tabs {
+    display:flex; gap:2px; margin-bottom:28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding:3px; width:fit-content;
+  }
+  .tab {
+    padding:7px 16px; border-radius:6px;
+    font-size:13px; font-weight:500; cursor:pointer;
+    border:none; background:transparent; color:var(--ink-muted);
+    transition:all .15s; letter-spacing:0;
+    font-family:'Inter',sans-serif;
+  }
+  .tab:hover { color:var(--ink); }
+  .tab.active {
+    background: var(--surface);
+    color: var(--charcoal); font-weight:600;
+    box-shadow: 0 1px 2px rgba(20,20,20,0.08), 0 0 0 1px var(--border);
+  }
+
+  .page { display:none; } .page.active { display:block; }
+
+  /* ── SHARED FORM ── */
+  .main-grid { display:grid; grid-template-columns:430px 1fr; gap:28px; align-items:start; }
+
+  .form-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow:hidden; position:sticky; top:20px;
+  }
+  .panel-header {
+    padding:18px 24px 16px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:10px;
+    background: linear-gradient(to right, var(--surface2), var(--surface));
+  }
+  .panel-header h2 {
+    font-family:'Inter',sans-serif;
+    font-size:19px; font-weight:700; color:var(--charcoal);
+  }
+  .panel-badge {
+    font-size:9.5px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase;
+    padding:3px 9px; border-radius:20px;
+    background: var(--gold-dim); color:var(--gold-dark); border:1px solid var(--gold-line);
+  }
+  .form-body {
+    padding:22px 24px; display:flex; flex-direction:column; gap:15px;
+    max-height:calc(100vh - 200px); overflow-y:auto;
+  }
+  .form-body::-webkit-scrollbar { width:4px; }
+  .form-body::-webkit-scrollbar-track { background:transparent; }
+  .form-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+
+  label {
+    font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--ink-muted);
+  }
+
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    color: var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:13.5px; padding:9px 12px; outline:none;
+    transition:border-color .2s, background .2s, box-shadow .2s;
+    width:100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--gold);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(31,47,140,0.12);
+  }
+  input::placeholder, textarea::placeholder { color:var(--ink-muted); opacity:0.5; }
+  select option { background:#fff; color:var(--ink); }
+  textarea { resize:vertical; min-height:64px; }
+
+  .section-divider {
+    font-size:9.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--gold-dark); border-bottom:1.5px solid var(--gold-line);
+    padding-bottom:7px; margin-top:4px;
+    display:flex; align-items:center; gap:7px;
+  }
+
+  .status-select-wrap { position:relative; }
+  .status-select-wrap select { padding-left:30px; }
+  .status-color-dot {
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    width:9px; height:9px; border-radius:50%; pointer-events:none; transition:background .2s;
+  }
+
+  .submit-btn {
+    width:100%; padding:10px; border:none; border-radius:var(--radius-xs);
+    background: var(--gold);
+    color:#fff; font-family:'Inter',sans-serif; font-weight:600;
+    font-size:13.5px; letter-spacing:0; cursor:pointer;
+    transition:background .15s, transform .1s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .submit-btn:hover { background:var(--gold-dark); }
+  .submit-btn:active { transform:scale(.99); }
+
+  .btn-ghost {
+    width:100%; padding:10px; border-radius:var(--radius-xs);
+    border:1px solid var(--border); background:transparent;
+    color:var(--ink-muted); cursor:pointer; font-size:13px;
+    font-family:'Inter',sans-serif; transition:all .2s;
+  }
+  .btn-ghost:hover { border-color:var(--border-strong); color:var(--ink); }
+
+  /* ── CLIENT DASHBOARD ── */
+  .dash-panel { display:flex; flex-direction:column; gap:18px; }
+  .filter-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .search-wrap { position:relative; flex:1; min-width:220px; }
+  .search-wrap input {
+    padding-left:38px;
+    background:#fff;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
+  }
+  .search-icon {
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    color:var(--ink-muted); font-size:14px; pointer-events:none;
+  }
+
+  .filter-chip {
+    padding:7px 14px; border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--surface); color:var(--ink-muted);
+    font-size:11px; font-weight:500; cursor:pointer;
+    transition:all .2s; white-space:nowrap;
+    font-family:'Inter',sans-serif;
+    box-shadow:var(--shadow-sm);
+  }
+  .filter-chip:hover { border-color:var(--gold-line); color:var(--gold-dark); }
+  .filter-chip.active {
+    background:var(--gold);
+    border-color:transparent; color:#fff; font-weight:600;
+    box-shadow:0 2px 8px rgba(31,47,140,0.15);
+  }
+
+  /* ── CLIENT CARDS ── */
+  .clients-grid { display:flex; flex-direction:column; gap:10px; }
+
+  .client-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding:16px 20px;
+    box-shadow: var(--shadow-sm);
+    transition:border-color .2s, box-shadow .2s, transform .15s;
+    animation:fadeUp .3s ease; position:relative; overflow:hidden;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .client-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:3px 0 0 3px; }
+  .client-card:hover { border-color:var(--gold-line); box-shadow:var(--shadow); }
+
+  .card-top { display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center; }
+
+  .card-avatar {
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700; letter-spacing:-0.01em;
+    color:#fff;
+  }
+  .card-name {
+    font-family:'Inter',sans-serif;
+    font-size:16px; font-weight:700; color:var(--charcoal); margin-bottom:4px;
+  }
+  .card-meta { display:flex; gap:12px; flex-wrap:wrap; }
+  .card-meta span { font-size:11.5px; color:var(--ink-muted); display:flex; align-items:center; gap:3px; }
+  .card-meta span b { color:var(--ink-mid); font-weight:500; }
+  .card-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .tag {
+    font-size:9px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+    padding:3px 8px; border-radius:20px; border:1px solid transparent;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .tag .ic { width:10px; height:10px; }
+  .tag-visa  { background:var(--gold-dim); color:var(--gold-dark); border-color:var(--gold-line); }
+  .tag-job   { background:#ebf4ff; color:#2b6cb0; border-color:#bee3f8; }
+  .tag-agent { background:#f3effe; color:#6b46c1; border-color:#d6bcfa; }
+
+  .card-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+  .status-pill {
+    font-size:9.5px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase;
+    padding:4px 11px; border-radius:20px; white-space:nowrap; border:1px solid transparent;
+  }
+  .card-date { font-size:10px; color:var(--ink-muted); font-family:'JetBrains Mono',monospace; }
+  .card-actions { display:flex; gap:5px; }
+
+  .icon-btn {
+    width:28px; height:28px; border-radius:var(--radius-xs);
+    border:1px solid var(--border); background:transparent;
+    color:var(--ink-muted); cursor:pointer; font-size:12px;
+    display:flex; align-items:center; justify-content:center; transition:all .2s;
+  }
+  .icon-btn:hover { border-color:var(--gold-line); color:var(--gold-dark); background:var(--gold-dim); }
+  .icon-btn.del:hover { border-color:#fed7d7; color:var(--c-red); background:#fff5f5; }
+
+  .card-details {
+    display:none; margin-top:14px; padding-top:14px;
+    border-top:1px solid var(--border);
+    grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:12px;
+  }
+  .client-card.expanded .card-details { display:grid; }
+  .detail-item { display:flex; flex-direction:column; gap:3px; }
+  .detail-label { font-size:9px; text-transform:uppercase; letter-spacing:0.09em; color:var(--ink-muted); font-weight:600; }
+  .detail-val { font-size:13px; color:var(--ink); }
+  .detail-val.money { color:var(--gold-dark); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; }
+  .detail-val.italic { color:var(--ink-muted); font-style:italic; }
+
+  /* ── STATUS COLOUR SYSTEM ── */
+  .s-review::before     { background:var(--c-purple); }
+  .s-review .card-avatar  { background:var(--c-purple); }
+  .s-review .status-pill  { background:var(--c-purple-bg); color:var(--c-purple); border-color:#e9d8fd; }
+
+  .s-eligible::before   { background:var(--c-orange); }
+  .s-eligible .card-avatar{ background:var(--c-orange); }
+  .s-eligible .status-pill{ background:var(--c-orange-bg); color:var(--c-orange); border-color:#fbd38d; }
+
+  .s-registered::before { background:var(--c-blue); }
+  .s-registered .card-avatar{ background:var(--c-blue); }
+  .s-registered .status-pill{ background:var(--c-blue-bg); color:var(--c-blue); border-color:#bee3f8; }
+
+  .s-offer::before      { background:var(--gold); }
+  .s-offer .card-avatar  { background:var(--gold); }
+  .s-offer .status-pill  { background:var(--gold-dim); color:var(--gold-dark); border-color:var(--gold-line); }
+
+  .s-wp::before         { background:var(--c-teal); }
+  .s-wp .card-avatar     { background:var(--c-teal); }
+  .s-wp .status-pill     { background:var(--c-teal-bg); color:var(--c-teal); border-color:#b2f5ea; }
+
+  .s-visa::before       { background:var(--c-green); }
+  .s-visa .card-avatar   { background:var(--c-green); }
+  .s-visa .status-pill   { background:var(--c-green-bg); color:var(--c-green); border-color:#c6f6d5; }
+
+  .s-complete::before   { background:var(--c-green); }
+  .s-complete .card-avatar{ background:var(--c-green); }
+  .s-complete .status-pill{ background:var(--c-green-bg); color:var(--c-green); border-color:#c6f6d5; }
+
+  .s-pay2::before       { background:var(--c-red); }
+  .s-pay2 .card-avatar   { background:var(--c-red); }
+  .s-pay2 .status-pill   { background:var(--c-red-bg); color:var(--c-red); border-color:#fed7d7; }
+
+  .s-pay3::before       { background:var(--c-red); }
+  .s-pay3 .card-avatar   { background:var(--c-red); }
+  .s-pay3 .status-pill   { background:var(--c-red-bg); color:var(--c-red); border-color:#fed7d7; }
+
+  .s-payfinal::before   { background:var(--c-red); }
+  .s-payfinal .card-avatar{ background:var(--c-red); }
+  .s-payfinal .status-pill{ background:var(--c-red-bg); color:var(--c-red); border-color:#fed7d7; }
+
+  /* ── AGENT DASHBOARD ── */
+  .agent-page { display:flex; flex-direction:column; gap:28px; }
+  .agent-top-row { display:grid; grid-template-columns:360px 1fr; gap:28px; align-items:start; }
+  .agent-form-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+  .agent-form-body { padding:20px 24px; display:flex; flex-direction:column; gap:15px; }
+  .agents-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+
+  .agent-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:22px;
+    box-shadow:var(--shadow-sm); position:relative; overflow:hidden;
+    transition:border-color .2s, box-shadow .2s, transform .15s;
+    animation:fadeUp .3s ease;
+  }
+  .agent-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:var(--gold);
+  }
+  .agent-card:hover { border-color:var(--gold-line); box-shadow:var(--shadow); }
+
+  .agent-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .agent-avatar {
+    width:48px; height:48px; border-radius:12px;
+    background:var(--gold-dim);
+    border:1.5px solid var(--gold-line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Inter',sans-serif; font-size:18px; font-weight:700; color:var(--gold-dark);
+  }
+  .agent-card-actions { display:flex; gap:5px; }
+  .agent-name { font-family:'Inter',sans-serif; font-size:18px; font-weight:700; color:var(--charcoal); margin-bottom:4px; }
+  .agent-meta { font-size:12px; color:var(--ink-muted); margin-bottom:16px; font-weight:400; }
+
+  .slots-display { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .slot-box {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius-xs); padding:10px 8px; text-align:center;
+  }
+  .slot-num { font-family:'Inter',sans-serif; font-size:22px; font-weight:700; line-height:1; }
+  .slot-label { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-muted); margin-top:3px; font-weight:600; }
+  .slot-box.total .slot-num { color:var(--gold-dark); }
+  .slot-box.used .slot-num  { color:var(--c-blue); }
+  .slot-box.free .slot-num  { color:var(--c-green); }
+
+  .slot-bar { margin-top:14px; height:4px; border-radius:4px; background:var(--bg-alt); overflow:hidden; border:1px solid var(--border); }
+  .slot-bar-fill { height:100%; border-radius:4px; background:var(--gold); transition:width .4s; }
+
+  .agent-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:16px; }
+  .agent-btn {
+    padding:9px 10px; border-radius:var(--radius-xs); font-size:12px; font-weight:600;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+    transition:all .2s; font-family:'Inter',sans-serif; border:1.5px solid;
+    letter-spacing:0.02em;
+  }
+  .agent-btn-clients { background:var(--gold-dim); color:var(--gold-dark); border-color:var(--gold-line); }
+  .agent-btn-clients:hover { background:rgba(31,47,140,0.1); }
+  .agent-btn-add { background:var(--c-green-bg); color:var(--c-green); border-color:#c6f6d5; }
+  .agent-btn-add:hover { background:#dcfce7; }
+
+  /* Inline edit */
+  .agent-card.editing { border-color:var(--gold-line); box-shadow:0 0 0 3px rgba(31,47,140,0.12), var(--shadow); }
+  .agent-edit-form { display:none; flex-direction:column; gap:11px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+  .agent-card.editing .agent-edit-form { display:flex; }
+  .agent-card.editing .agent-btns { display:none; }
+  .agent-edit-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .edit-submit-btn {
+    padding:9px; border:none; border-radius:var(--radius-xs);
+    background:var(--gold);
+    color:#fff; font-weight:600; font-size:12px; cursor:pointer; font-family:'Inter',sans-serif;
+    box-shadow:0 2px 6px rgba(31,47,140,0.15); letter-spacing:0.04em;
+  }
+  .edit-cancel-btn {
+    padding:9px; border:1px solid var(--border); border-radius:var(--radius-xs);
+    background:transparent; color:var(--ink-muted); font-size:12px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+
+  /* ── SLIDE PANEL ── */
+  .slide-overlay {
+    position:fixed; inset:0; background:rgba(20,20,20,0.4);
+    backdrop-filter:blur(3px); z-index:200;
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  .slide-overlay.open { opacity:1; pointer-events:all; }
+  .slide-panel {
+    position:fixed; right:0; top:0; bottom:0; width:min(600px,100vw);
+    background:#fff; border-left:1.5px solid var(--border);
+    box-shadow: -12px 0 40px rgba(20,20,20,0.12);
+    z-index:201; transform:translateX(100%);
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .slide-overlay.open .slide-panel { transform:translateX(0); }
+  .slide-header {
+    padding:24px 28px 18px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+    background:var(--surface2);
+  }
+  .slide-title { font-family:'Inter',sans-serif; font-size:20px; font-weight:700; color:var(--charcoal); }
+  .slide-subtitle { font-size:12px; color:var(--ink-muted); margin-top:3px; }
+  .slide-close {
+    width:34px; height:34px; border-radius:var(--radius-xs);
+    border:1px solid var(--border); background:#fff;
+    color:var(--ink-muted); cursor:pointer; font-size:16px;
+    display:flex; align-items:center; justify-content:center; transition:all .2s;
+  }
+  .slide-close:hover { border-color:#fed7d7; color:var(--c-red); background:#fff5f5; }
+  .slide-body { flex:1; overflow-y:auto; padding:20px 28px; display:flex; flex-direction:column; gap:10px; }
+  .slide-body::-webkit-scrollbar { width:4px; }
+  .slide-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+  /* Mini client card in slide */
+  .mini-client-card {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:14px 16px;
+    position:relative; overflow:hidden; transition:all .2s;
+  }
+  .mini-client-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .mini-client-card:hover { border-color:var(--gold-line); }
+  .mini-card-top { display:flex; align-items:center; gap:12px; }
+  .mini-avatar {
+    width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Inter',sans-serif; font-size:13px; font-weight:700; flex-shrink:0; color:#fff;
+  }
+  .mini-name { font-size:14px; color:var(--charcoal); font-weight:600; margin-bottom:2px; font-family:'Inter',sans-serif; }
+  .mini-meta { font-size:11px; color:var(--ink-muted); }
+  .mini-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .mini-status { font-size:9px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:3px 9px; border-radius:20px; border:1px solid transparent; }
+  .mini-actions { display:flex; gap:4px; margin-top:4px; }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(20,20,20,0.45);
+    backdrop-filter:blur(4px); z-index:300;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal {
+    background:#fff; border:1px solid var(--border);
+    border-radius:var(--radius); padding:0; max-width:520px; width:100%;
+    transform:scale(.97); transition:transform .2s;
+    box-shadow: var(--shadow-lg);
+    max-height:90vh; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .modal-overlay.open .modal { transform:scale(1); }
+  .modal-head {
+    padding:20px 24px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+    background:var(--surface2);
+  }
+  .modal-head h3 { font-family:'Inter',sans-serif; font-size:19px; font-weight:700; color:var(--charcoal); }
+  .modal-body { padding:20px 24px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:14px; }
+  .modal-body::-webkit-scrollbar { width:4px; }
+  .modal-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+  .modal-actions { padding:16px 24px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0; background:var(--surface2); }
+
+  .btn-cancel {
+    padding:9px 18px; border-radius:var(--radius-xs);
+    border:1px solid var(--border); background:#fff;
+    color:var(--ink-muted); cursor:pointer; font-size:13px; font-family:'Inter',sans-serif;
+    transition:all .2s;
+  }
+  .btn-cancel:hover { border-color:var(--border-strong); color:var(--ink); }
+  .btn-danger {
+    padding:9px 18px; border-radius:var(--radius-xs); border:none;
+    background:#d1453b;
+    color:#fff; cursor:pointer; font-size:13px; font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .btn-danger:hover { background:#b8352c; }
+  .btn-primary {
+    padding:9px 20px; border-radius:var(--radius-xs); border:none;
+    background:var(--gold);
+    color:#fff; cursor:pointer; font-size:13px; font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .btn-primary:hover { background:var(--gold-dark); }
+
+  /* Stats cards inline style */
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:22px; text-align:center;
+    box-shadow:var(--shadow-sm);
+  }
+  .stat-card-num { font-family:'Inter',sans-serif; font-size:32px; font-weight:700; line-height:1; }
+  .stat-card-label { font-size:10px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.09em; margin-top:5px; font-weight:600; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--ink-muted); }
+  .empty-state .es-icon { font-size:36px; margin-bottom:12px; opacity:.4; }
+  .empty-state p { font-size:13px; line-height:1.6; }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:28px; right:28px; z-index:999;
+    background:#fff; border:1.5px solid var(--gold-line);
+    padding:12px 20px; border-radius:var(--radius-sm);
+    font-size:13px; color:var(--ink);
+    display:flex; align-items:center; gap:10px;
+    transform:translateY(20px); opacity:0; transition:all .3s; pointer-events:none;
+    box-shadow: var(--shadow);
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  @media(max-width:980px) {
+    .main-grid,.agent-top-row { grid-template-columns:1fr; }
+    .form-panel { position:static; }
+    .header-stats { display:none; }
+  }
+
+  .ic { width:14px; height:14px; display:inline-block; vertical-align:-2.5px;
+    fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+  .ic-plane { fill:none; }
+  .flag { font-size:13px; line-height:1; vertical-align:-1px; }
+  .flag-img { display:inline-block; vertical-align:-2px; border-radius:2px; box-shadow:0 0 0 1px rgba(0,0,0,0.08); object-fit:cover; }
+
+  /* ── CUSTOM COUNTRY DROPDOWN (flags need real <img>, native <select> can't render them) ── */
+  .cdd { position:relative; }
+  .cdd-btn {
+    width:100%; text-align:left; background:var(--surface2);
+    border:1px solid var(--border); border-radius:var(--radius-xs);
+    color:var(--ink); font-family:'Inter',sans-serif; font-size:13.5px; padding:9px 12px;
+    cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .cdd-btn::after { content:''; width:7px; height:7px; border-right:1.5px solid var(--ink-muted); border-bottom:1.5px solid var(--ink-muted); transform:rotate(45deg); flex-shrink:0; }
+  .cdd-btn:focus, .cdd-btn:hover { border-color:var(--gold); }
+  .cdd-btn span { color:var(--ink); }
+  .cdd-panel {
+    display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:50;
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius-xs);
+    box-shadow:var(--shadow-lg); max-height:280px; overflow:hidden; flex-direction:column;
+  }
+  .cdd-panel.open { display:flex; }
+  .cdd-search {
+    margin:8px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-xs);
+    font-family:'Inter',sans-serif; font-size:13px; outline:none;
+  }
+  .cdd-search:focus { border-color:var(--gold); }
+  .cdd-list { overflow-y:auto; padding:4px; }
+  .cdd-list::-webkit-scrollbar { width:4px; }
+  .cdd-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+  .cdd-item {
+    display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:6px;
+    font-size:13px; color:var(--ink); cursor:pointer;
+  }
+  .cdd-item:hover { background:var(--gold-dim); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <img src="logo.png" alt="RMC Logo">
+      <div class="logo-text"><h1>Relocate Management Consultancies</h1><p>Immigration Batch Manager</p></div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat"><div class="hstat-num" id="stat-total">0</div><div class="hstat-label">Total</div></div>
+      <div class="hstat"><div class="hstat-num" id="stat-review" style="color:var(--c-purple)">0</div><div class="hstat-label">Review</div></div>
+      <div class="hstat"><div class="hstat-num" id="stat-pay" style="color:var(--c-red)">0</div><div class="hstat-label">Payment Due</div></div>
+      <div class="hstat"><div class="hstat-num" id="stat-complete" style="color:var(--c-green)">0</div><div class="hstat-label">Completed</div></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('clients')"><svg class="ic" viewBox="0 0 16 16"><rect x="3" y="2.6" width="10" height="11.6" rx="1.2"/><rect x="5.5" y="1.1" width="5" height="2.4" rx="0.6"/><line x1="5.5" y1="7.3" x2="10.5" y2="7.3"/><line x1="5.5" y1="9.8" x2="10.5" y2="9.8"/></svg> Client Dashboard</button>
+    <button class="tab" onclick="showPage('add')"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg> Add Client</button>
+    <button class="tab" onclick="showPage('agents')"><svg class="ic" viewBox="0 0 16 16"><circle cx="6.2" cy="5.8" r="2.3"/><path d="M1.8 14c0-2.6 1.9-4.3 4.4-4.3s4.4 1.7 4.4 4.3"/><circle cx="12" cy="6.3" r="1.7"/><path d="M10.3 9.9c1.7.4 2.9 1.8 3 3.9"/></svg> Agents</button>
+  </div>
+
+  <!-- PAGE: CLIENTS -->
+  <div class="page active" id="page-clients">
+    <div class="dash-panel">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <span class="search-icon"><svg class="ic" viewBox="0 0 16 16"><circle cx="6.6" cy="6.6" r="4.4"/><line x1="9.9" y1="9.9" x2="14" y2="14"/></svg></span>
+          <input type="text" id="search-input" placeholder="Search name, passport, nationality, country…" oninput="renderCards()">
+        </div>
+        <button class="filter-chip active" onclick="setFilter(this,'all')">All</button>
+        <button class="filter-chip" onclick="setFilter(this,'review')"><svg class="ic" viewBox="0 0 16 16"><circle cx="6.6" cy="6.6" r="4.4"/><line x1="9.9" y1="9.9" x2="14" y2="14"/></svg> Review</button>
+        <button class="filter-chip" onclick="setFilter(this,'eligible')"><svg class="ic" viewBox="0 0 16 16"><rect x="1.3" y="3.6" width="13.4" height="8.8" rx="1.2"/><line x1="1.3" y1="6.4" x2="14.7" y2="6.4"/></svg> Eligible</button>
+        <button class="filter-chip" onclick="setFilter(this,'registered')"><svg class="ic" viewBox="0 0 16 16"><path d="M4 1.4h4.8l3.2 3.2v10H4z"/><line x1="6" y1="8.2" x2="10" y2="8.2"/><line x1="6" y1="10.6" x2="10" y2="10.6"/></svg> Registered</button>
+        <button class="filter-chip" onclick="setFilter(this,'offer')"><svg class="ic" viewBox="0 0 16 16"><path d="M4 1.4h4.8l3.2 3.2v10H4z"/><path d="M8.8 1.4v3.2H12"/></svg> Offer Letter</button>
+        <button class="filter-chip" onclick="setFilter(this,'wp')"><svg class="ic" viewBox="0 0 16 16"><path d="M8 1.4l5.4 1.9v3.9c0 3.9-2.4 6.3-5.4 7.3-3-1-5.4-3.4-5.4-7.3V3.3z"/><path d="M5.4 8l1.8 1.8L11 6"/></svg> Work Permit</button>
+        <button class="filter-chip" onclick="setFilter(this,'visa')"><svg class="ic" viewBox="0 0 16 16"><path d="M14 2L1.6 7.6l4.3 1.7M14 2L8.2 14l-2.3-4.7M14 2L5.9 9.6"/></svg> Visa</button>
+        <button class="filter-chip" onclick="setFilter(this,'complete')"><svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.3"/><path d="M5.2 8.2l2 2 3.6-4"/></svg> Completed</button>
+        <button class="filter-chip" onclick="setFilter(this,'pay')"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="1" x2="8" y2="15"/><path d="M11 4.6c0-1.4-1.4-2.4-3-2.4S5 3.2 5 4.6c0 3 6 1.4 6 4.4 0 1.4-1.4 2.4-3 2.4s-3-1-3-2.4"/></svg> Payment Due</button>
+      </div>
+      <div class="clients-grid" id="clients-grid"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: ADD CLIENT -->
+  <div class="page" id="page-add">
+    <div class="main-grid">
+      <div class="form-panel" id="form-panel">
+        <div class="panel-header">
+          <h2 id="form-title">Add New Client</h2>
+          <span class="panel-badge" id="form-mode-badge">New Entry</span>
+        </div>
+        <div class="form-body">
+          <div class="form-group full"><label>Full Name *</label><input type="text" id="f-name" placeholder="e.g. Ahmed Al Rashidi"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Passport No</label><input type="text" id="f-passport" placeholder="e.g. A1234567"></div>
+            <div class="form-group"><label>Nationality</label><div class="cdd" id="f-nationality-wrap"></div></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Country Applying</label><div class="cdd" id="f-country-wrap"></div></div>
+            <div class="form-group"><label>Visa Type</label>
+              <select id="f-visa">
+                <option value="">— Select —</option>
+                <option>Work Permit</option><option>Skilled Worker</option><option>Family Reunion</option>
+                <option>Student Visa</option><option>Investor Visa</option><option>Permanent Residency</option>
+                <option>Citizenship</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group full"><label>Job / Occupation</label><input type="text" id="f-job" placeholder="e.g. Software Engineer"></div>
+          <div class="form-group full"><label>Assigned Agent</label>
+            <select id="f-agent"><option value="">— No Agent —</option></select>
+          </div>
+          <div class="section-divider"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="1" x2="8" y2="15"/><path d="M11 4.6c0-1.4-1.4-2.4-3-2.4S5 3.2 5 4.6c0 3 6 1.4 6 4.4 0 1.4-1.4 2.4-3 2.4s-3-1-3-2.4"/></svg> Package &amp; Installments</div>
+          <div class="form-row">
+            <div class="form-group"><label>Total Package</label><input type="text" id="f-total" placeholder="e.g. AED 25,000"></div>
+            <div class="form-group"><label>1st Installment</label><input type="text" id="f-inst1" placeholder="e.g. AED 8,000"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>2nd Installment</label><input type="text" id="f-inst2" placeholder="e.g. AED 6,000"></div>
+            <div class="form-group"><label>3rd Installment</label><input type="text" id="f-inst3" placeholder="e.g. AED 6,000"></div>
+          </div>
+          <div class="form-group full"><label>Final Installment</label><input type="text" id="f-instfinal" placeholder="e.g. AED 5,000"></div>
+          <div class="section-divider"><svg class="ic" viewBox="0 0 16 16"><line x1="4" y1="1.5" x2="4" y2="14.5"/><path d="M4 2.2h8l-2.2 2.6L12 7.4H4"/></svg> Status &amp; Notes</div>
+          <div class="form-group full"><label>Current Status *</label>
+            <div class="status-select-wrap">
+              <div class="status-color-dot" id="status-dot" style="background:#9a9388"></div>
+              <select id="f-status" onchange="updateStatusDot()">
+                <option value="">— Select Status —</option>
+                <option value="review">Under Review</option>
+                <option value="eligible">Eligible (1st Payment Pending)</option>
+                <option value="registered">Registered</option>
+                <option value="offer">Offer Letter Received</option>
+                <option value="wp">Work Permit Received</option>
+                <option value="visa">Visa Received</option>
+                <option value="complete">Completed</option>
+                <option value="pay2">2nd Payment Pending</option>
+                <option value="pay3">3rd Payment Pending</option>
+                <option value="payfinal">Final Payment Pending</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group full"><label>Notes / Remarks</label><textarea id="f-notes" placeholder="Any additional notes..."></textarea></div>
+          <button class="submit-btn" onclick="submitForm()"><span id="submit-icon"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg></span><span id="submit-label">Add Client</span></button>
+          <button class="btn-ghost" id="cancel-edit-btn" style="display:none;" onclick="cancelEdit()">Cancel Edit</button>
+        </div>
+      </div>
+      <div id="edit-preview-panel" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: AGENTS -->
+  <div class="page" id="page-agents">
+    <div class="agent-page">
+      <div class="agent-top-row">
+        <div class="agent-form-panel">
+          <div class="panel-header"><h2>Add Agent</h2><span class="panel-badge">New Agent</span></div>
+          <div class="agent-form-body">
+            <div class="form-group"><label>Agent Name *</label><input type="text" id="ag-name" placeholder="e.g. Sarah Johnson"></div>
+            <div class="form-group"><label>Region / Location</label><input type="text" id="ag-region" placeholder="e.g. Dubai, UAE"></div>
+            <div class="section-divider"><svg class="ic" viewBox="0 0 16 16"><rect x="1.4" y="1.4" width="5.2" height="5.2"/><rect x="9.4" y="1.4" width="5.2" height="5.2"/><rect x="1.4" y="9.4" width="5.2" height="5.2"/><rect x="9.4" y="9.4" width="5.2" height="5.2"/></svg> Slots</div>
+            <div class="form-row">
+              <div class="form-group"><label>Total Slots</label><input type="number" id="ag-total" placeholder="e.g. 20" min="0"></div>
+              <div class="form-group"><label>Slots Used</label><input type="number" id="ag-used" placeholder="e.g. 8" min="0"></div>
+            </div>
+            <div class="form-group"><label>Notes</label><input type="text" id="ag-notes" placeholder="Any notes about this agent..."></div>
+            <button class="submit-btn" onclick="addAgent()" style="margin-top:4px;"><span><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg></span> Add Agent</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+            <div class="stat-card"><div class="stat-card-num" style="color:var(--gold-dark)" id="ag-stat-agents">0</div><div class="stat-card-label">Total Agents</div></div>
+            <div class="stat-card"><div class="stat-card-num" style="color:var(--c-blue)" id="ag-stat-total">0</div><div class="stat-card-label">Total Slots</div></div>
+            <div class="stat-card"><div class="stat-card-num" style="color:var(--c-green)" id="ag-stat-free">0</div><div class="stat-card-label">Free Slots</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Inter',sans-serif;font-size:20px;font-weight:700;color:var(--charcoal);margin-bottom:16px;">All Agents</div>
+        <div class="agents-grid" id="agents-grid"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SLIDE PANEL -->
+<div class="slide-overlay" id="slide-overlay" onclick="closeSlide(event)">
+  <div class="slide-panel" id="slide-panel">
+    <div class="slide-header">
+      <div>
+        <div class="slide-title" id="slide-title">Agent Clients</div>
+        <div class="slide-subtitle" id="slide-subtitle"></div>
+      </div>
+      <button class="slide-close" onclick="closeSlideBtn()"><svg class="ic" viewBox="0 0 16 16"><line x1="3.2" y1="3.2" x2="12.8" y2="12.8"/><line x1="12.8" y1="3.2" x2="3.2" y2="12.8"/></svg></button>
+    </div>
+    <div class="slide-body" id="slide-body"></div>
+  </div>
+</div>
+
+<!-- ADD AGENT CLIENT MODAL -->
+<div class="modal-overlay" id="ac-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="ac-modal-title">Add Client to Agent</h3>
+      <button class="slide-close" onclick="closeAcModal()"><svg class="ic" viewBox="0 0 16 16"><line x1="3.2" y1="3.2" x2="12.8" y2="12.8"/><line x1="12.8" y1="3.2" x2="3.2" y2="12.8"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group full"><label>Full Name *</label><input type="text" id="ac-name" placeholder="e.g. Ahmed Al Rashidi"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Passport No</label><input type="text" id="ac-passport" placeholder="e.g. A1234567"></div>
+        <div class="form-group"><label>Nationality</label><div class="cdd" id="ac-nationality-wrap"></div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Country Applying</label><div class="cdd" id="ac-country-wrap"></div></div>
+        <div class="form-group"><label>Visa Type</label>
+          <select id="ac-visa">
+            <option value="">— Select —</option>
+            <option>Work Permit</option><option>Skilled Worker</option><option>Family Reunion</option>
+            <option>Student Visa</option><option>Investor Visa</option><option>Permanent Residency</option>
+            <option>Citizenship</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group full"><label>Job / Occupation</label><input type="text" id="ac-job" placeholder="e.g. Nurse"></div>
+      <div class="section-divider"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="1" x2="8" y2="15"/><path d="M11 4.6c0-1.4-1.4-2.4-3-2.4S5 3.2 5 4.6c0 3 6 1.4 6 4.4 0 1.4-1.4 2.4-3 2.4s-3-1-3-2.4"/></svg> Package &amp; Installments</div>
+      <div class="form-row">
+        <div class="form-group"><label>Total Package</label><input type="text" id="ac-total" placeholder="e.g. AED 25,000"></div>
+        <div class="form-group"><label>1st Installment</label><input type="text" id="ac-inst1" placeholder="e.g. AED 8,000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>2nd Installment</label><input type="text" id="ac-inst2" placeholder="e.g. AED 6,000"></div>
+        <div class="form-group"><label>3rd Installment</label><input type="text" id="ac-inst3" placeholder="e.g. AED 6,000"></div>
+      </div>
+      <div class="form-group full"><label>Final Installment</label><input type="text" id="ac-instfinal" placeholder="e.g. AED 5,000"></div>
+      <div class="section-divider"><svg class="ic" viewBox="0 0 16 16"><line x1="4" y1="1.5" x2="4" y2="14.5"/><path d="M4 2.2h8l-2.2 2.6L12 7.4H4"/></svg> Status &amp; Notes</div>
+      <div class="form-group full"><label>Current Status *</label>
+        <div class="status-select-wrap">
+          <div class="status-color-dot" id="ac-status-dot" style="background:#9a9388"></div>
+          <select id="ac-status" onchange="updateAcStatusDot()">
+            <option value="">— Select Status —</option>
+            <option value="review">Under Review</option>
+            <option value="eligible">Eligible (1st Payment Pending)</option>
+            <option value="registered">Registered</option>
+            <option value="offer">Offer Letter Received</option>
+            <option value="wp">Work Permit Received</option>
+            <option value="visa">Visa Received</option>
+            <option value="complete">Completed</option>
+            <option value="pay2">2nd Payment Pending</option>
+            <option value="pay3">3rd Payment Pending</option>
+            <option value="payfinal">Final Payment Pending</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group full"><label>Notes / Remarks</label><textarea id="ac-notes" placeholder="Any additional notes..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAcModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveAgentClient()"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg> Add Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-overlay" id="del-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Delete Record?</h3><button class="slide-close" onclick="closeDelModal()"><svg class="ic" viewBox="0 0 16 16"><line x1="3.2" y1="3.2" x2="12.8" y2="12.8"/><line x1="12.8" y1="3.2" x2="3.2" y2="12.8"/></svg></button></div>
+    <div class="modal-body"><p id="del-modal-msg" style="color:var(--ink-muted);font-size:13px;line-height:1.6;">This will permanently remove this record.</p></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDelModal()">Cancel</button>
+      <button class="btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-icon"><svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.3"/><path d="M5.2 8.2l2 2 3.6-4"/></svg></span><span id="toast-msg">Done</span></div>
+
+<script>
+
+const COUNTRIES = [
+  ["Afghanistan","Afghan","AF"],
+  ["Albania","Albanian","AL"],
+  ["Algeria","Algerian","DZ"],
+  ["Andorra","Andorran","AD"],
+  ["Angola","Angolan","AO"],
+  ["Antigua and Barbuda","Antiguan","AG"],
+  ["Argentina","Argentinian","AR"],
+  ["Armenia","Armenian","AM"],
+  ["Australia","Australian","AU"],
+  ["Austria","Austrian","AT"],
+  ["Azerbaijan","Azerbaijani","AZ"],
+  ["Bahamas","Bahamian","BS"],
+  ["Bahrain","Bahraini","BH"],
+  ["Bangladesh","Bangladeshi","BD"],
+  ["Barbados","Barbadian","BB"],
+  ["Belarus","Belarusian","BY"],
+  ["Belgium","Belgian","BE"],
+  ["Belize","Belizean","BZ"],
+  ["Benin","Beninese","BJ"],
+  ["Bhutan","Bhutanese","BT"],
+  ["Bolivia","Bolivian","BO"],
+  ["Bosnia and Herzegovina","Bosnian","BA"],
+  ["Botswana","Motswana","BW"],
+  ["Brazil","Brazilian","BR"],
+  ["Brunei","Bruneian","BN"],
+  ["Bulgaria","Bulgarian","BG"],
+  ["Burkina Faso","Burkinabe","BF"],
+  ["Burundi","Burundian","BI"],
+  ["Cabo Verde","Cape Verdean","CV"],
+  ["Cambodia","Cambodian","KH"],
+  ["Cameroon","Cameroonian","CM"],
+  ["Canada","Canadian","CA"],
+  ["Central African Republic","Central African","CF"],
+  ["Chad","Chadian","TD"],
+  ["Chile","Chilean","CL"],
+  ["China","Chinese","CN"],
+  ["Colombia","Colombian","CO"],
+  ["Comoros","Comoran","KM"],
+  ["Congo (Republic)","Congolese","CG"],
+  ["Congo (DRC)","Congolese","CD"],
+  ["Costa Rica","Costa Rican","CR"],
+  ["Croatia","Croatian","HR"],
+  ["Cuba","Cuban","CU"],
+  ["Cyprus","Cypriot","CY"],
+  ["Czechia","Czech","CZ"],
+  ["Denmark","Danish","DK"],
+  ["Djibouti","Djiboutian","DJ"],
+  ["Dominica","Dominican","DM"],
+  ["Dominican Republic","Dominican","DO"],
+  ["Ecuador","Ecuadorian","EC"],
+  ["Egypt","Egyptian","EG"],
+  ["El Salvador","Salvadoran","SV"],
+  ["Equatorial Guinea","Equatoguinean","GQ"],
+  ["Eritrea","Eritrean","ER"],
+  ["Estonia","Estonian","EE"],
+  ["Eswatini","Swazi","SZ"],
+  ["Ethiopia","Ethiopian","ET"],
+  ["Fiji","Fijian","FJ"],
+  ["Finland","Finnish","FI"],
+  ["France","French","FR"],
+  ["Gabon","Gabonese","GA"],
+  ["Gambia","Gambian","GM"],
+  ["Georgia","Georgian","GE"],
+  ["Germany","German","DE"],
+  ["Ghana","Ghanaian","GH"],
+  ["Greece","Greek","GR"],
+  ["Grenada","Grenadian","GD"],
+  ["Guatemala","Guatemalan","GT"],
+  ["Guinea","Guinean","GN"],
+  ["Guinea-Bissau","Bissau-Guinean","GW"],
+  ["Guyana","Guyanese","GY"],
+  ["Haiti","Haitian","HT"],
+  ["Honduras","Honduran","HN"],
+  ["Hong Kong","Hong Konger","HK"],
+  ["Hungary","Hungarian","HU"],
+  ["Iceland","Icelandic","IS"],
+  ["India","Indian","IN"],
+  ["Indonesia","Indonesian","ID"],
+  ["Iran","Iranian","IR"],
+  ["Iraq","Iraqi","IQ"],
+  ["Ireland","Irish","IE"],
+  ["Israel","Israeli","IL"],
+  ["Italy","Italian","IT"],
+  ["Ivory Coast","Ivorian","CI"],
+  ["Jamaica","Jamaican","JM"],
+  ["Japan","Japanese","JP"],
+  ["Jordan","Jordanian","JO"],
+  ["Kazakhstan","Kazakh","KZ"],
+  ["Kenya","Kenyan","KE"],
+  ["Kiribati","I-Kiribati","KI"],
+  ["Kosovo","Kosovar","XK"],
+  ["Kuwait","Kuwaiti","KW"],
+  ["Kyrgyzstan","Kyrgyz","KG"],
+  ["Laos","Laotian","LA"],
+  ["Latvia","Latvian","LV"],
+  ["Lebanon","Lebanese","LB"],
+  ["Lesotho","Mosotho","LS"],
+  ["Liberia","Liberian","LR"],
+  ["Libya","Libyan","LY"],
+  ["Liechtenstein","Liechtensteiner","LI"],
+  ["Lithuania","Lithuanian","LT"],
+  ["Luxembourg","Luxembourgish","LU"],
+  ["Madagascar","Malagasy","MG"],
+  ["Malawi","Malawian","MW"],
+  ["Malaysia","Malaysian","MY"],
+  ["Maldives","Maldivian","MV"],
+  ["Mali","Malian","ML"],
+  ["Malta","Maltese","MT"],
+  ["Marshall Islands","Marshallese","MH"],
+  ["Mauritania","Mauritanian","MR"],
+  ["Mauritius","Mauritian","MU"],
+  ["Mexico","Mexican","MX"],
+  ["Micronesia","Micronesian","FM"],
+  ["Moldova","Moldovan","MD"],
+  ["Monaco","Monegasque","MC"],
+  ["Mongolia","Mongolian","MN"],
+  ["Montenegro","Montenegrin","ME"],
+  ["Morocco","Moroccan","MA"],
+  ["Mozambique","Mozambican","MZ"],
+  ["Myanmar","Burmese","MM"],
+  ["Namibia","Namibian","NA"],
+  ["Nauru","Nauruan","NR"],
+  ["Nepal","Nepali","NP"],
+  ["Netherlands","Dutch","NL"],
+  ["New Zealand","New Zealander","NZ"],
+  ["Nicaragua","Nicaraguan","NI"],
+  ["Niger","Nigerien","NE"],
+  ["Nigeria","Nigerian","NG"],
+  ["North Korea","North Korean","KP"],
+  ["North Macedonia","Macedonian","MK"],
+  ["Norway","Norwegian","NO"],
+  ["Oman","Omani","OM"],
+  ["Pakistan","Pakistani","PK"],
+  ["Palau","Palauan","PW"],
+  ["Palestine","Palestinian","PS"],
+  ["Panama","Panamanian","PA"],
+  ["Papua New Guinea","Papua New Guinean","PG"],
+  ["Paraguay","Paraguayan","PY"],
+  ["Peru","Peruvian","PE"],
+  ["Philippines","Filipino","PH"],
+  ["Poland","Polish","PL"],
+  ["Portugal","Portuguese","PT"],
+  ["Qatar","Qatari","QA"],
+  ["Romania","Romanian","RO"],
+  ["Russia","Russian","RU"],
+  ["Rwanda","Rwandan","RW"],
+  ["Saint Kitts and Nevis","Kittitian","KN"],
+  ["Saint Lucia","Saint Lucian","LC"],
+  ["Saint Vincent and the Grenadines","Vincentian","VC"],
+  ["Samoa","Samoan","WS"],
+  ["San Marino","Sammarinese","SM"],
+  ["Sao Tome and Principe","Sao Tomean","ST"],
+  ["Saudi Arabia","Saudi","SA"],
+  ["Senegal","Senegalese","SN"],
+  ["Serbia","Serbian","RS"],
+  ["Seychelles","Seychellois","SC"],
+  ["Sierra Leone","Sierra Leonean","SL"],
+  ["Singapore","Singaporean","SG"],
+  ["Slovakia","Slovak","SK"],
+  ["Slovenia","Slovenian","SI"],
+  ["Solomon Islands","Solomon Islander","SB"],
+  ["Somalia","Somali","SO"],
+  ["South Africa","South African","ZA"],
+  ["South Korea","South Korean","KR"],
+  ["South Sudan","South Sudanese","SS"],
+  ["Spain","Spanish","ES"],
+  ["Sri Lanka","Sri Lankan","LK"],
+  ["Sudan","Sudanese","SD"],
+  ["Suriname","Surinamese","SR"],
+  ["Sweden","Swedish","SE"],
+  ["Switzerland","Swiss","CH"],
+  ["Syria","Syrian","SY"],
+  ["Taiwan","Taiwanese","TW"],
+  ["Tajikistan","Tajik","TJ"],
+  ["Tanzania","Tanzanian","TZ"],
+  ["Thailand","Thai","TH"],
+  ["Timor-Leste","Timorese","TL"],
+  ["Togo","Togolese","TG"],
+  ["Tonga","Tongan","TO"],
+  ["Trinidad and Tobago","Trinidadian","TT"],
+  ["Tunisia","Tunisian","TN"],
+  ["Turkey","Turkish","TR"],
+  ["Turkmenistan","Turkmen","TM"],
+  ["Tuvalu","Tuvaluan","TV"],
+  ["Uganda","Ugandan","UG"],
+  ["Ukraine","Ukrainian","UA"],
+  ["United Arab Emirates","Emirati","AE"],
+  ["United Kingdom","British","GB"],
+  ["United States","American","US"],
+  ["Uruguay","Uruguayan","UY"],
+  ["Uzbekistan","Uzbek","UZ"],
+  ["Vanuatu","Ni-Vanuatu","VU"],
+  ["Vatican City","Vatican","VA"],
+  ["Venezuela","Venezuelan","VE"],
+  ["Vietnam","Vietnamese","VN"],
+  ["Yemen","Yemeni","YE"],
+  ["Zambia","Zambian","ZM"],
+  ["Zimbabwe","Zimbabwean","ZW"]
+];
+
+// Flat lookup: country name / demonym (lowercase) -> ISO2, derived from COUNTRIES.
+const COUNTRY_CODES = {};
+COUNTRIES.forEach(([name, demonym, iso2]) => {
+  COUNTRY_CODES[name.toLowerCase()] = iso2;
+  COUNTRY_CODES[demonym.toLowerCase()] = iso2;
+});
+
+function iso2ToFlag(iso2){
+  return iso2.toLowerCase();
+}
+
+// Flag as a real image (flagcdn.com), not an emoji glyph — renders identically on
+// every OS/browser, unlike emoji flags which Windows and native <select> can't show.
+function flagImgTag(iso2, size){
+  size = size || 16;
+  const w = size, h = Math.round(size*0.75);
+  return `<img class="flag-img" src="https://flagcdn.com/${w}x${h}/${iso2.toLowerCase()}.png" width="${w}" height="${h}" alt="" loading="lazy">`;
+}
+
+function flagEmoji(text, fallbackIcon){
+  if(!text) return fallbackIcon;
+  const code = COUNTRY_CODES[text.trim().toLowerCase()];
+  if(!code) return fallbackIcon;
+  return flagImgTag(code, 16);
+}
+
+// ---- Custom country/nationality dropdown (native <select> can't render flag images) ----
+const DROPDOWN_CONFIG = {}; // id -> {mode}
+
+function renderDropdownMarkup(id){
+  return `
+    <button type="button" class="cdd-btn" id="${id}-btn" onclick="toggleDropdown('${id}')">
+      <span id="${id}-btn-label">— Select —</span>
+    </button>
+    <div class="cdd-panel" id="${id}-panel">
+      <input type="text" class="cdd-search" id="${id}-search" placeholder="Search…" oninput="filterDropdown('${id}')">
+      <div class="cdd-list" id="${id}-list"></div>
+    </div>`;
+}
+
+function buildDropdown(id, mode){
+  DROPDOWN_CONFIG[id] = {mode};
+  const wrap = document.getElementById(id+'-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = `<input type="hidden" id="${id}" value="">` + renderDropdownMarkup(id);
+  const list = document.getElementById(id+'-list');
+  const sorted = [...COUNTRIES].sort((a,b) => (mode==='demonym'?a[1]:a[0]).localeCompare(mode==='demonym'?b[1]:b[0]));
+  list.innerHTML = sorted.map(([name, demonym, iso2]) => {
+    const label = mode === 'demonym' ? demonym : name;
+    return `<div class="cdd-item" data-value="${label.replace(/"/g,'&quot;')}" onclick="selectCountryOption('${id}','${label.replace(/'/g,"\\'")}')">${flagImgTag(iso2,18)}<span>${label}</span></div>`;
+  }).join('');
+}
+
+function populateAllCountrySelects(){
+  buildDropdown('f-nationality', 'demonym');
+  buildDropdown('f-country', 'name');
+  buildDropdown('ac-nationality', 'demonym');
+  buildDropdown('ac-country', 'name');
+}
+
+function toggleDropdown(id){
+  document.querySelectorAll('.cdd-panel.open').forEach(p => { if(p.id !== id+'-panel') p.classList.remove('open'); });
+  const panel = document.getElementById(id+'-panel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')){
+    const search = document.getElementById(id+'-search');
+    search.value=''; filterDropdown(id);
+    setTimeout(()=>search.focus(), 30);
+  }
+}
+
+function filterDropdown(id){
+  const q = document.getElementById(id+'-search').value.trim().toLowerCase();
+  document.querySelectorAll('#'+id+'-list .cdd-item').forEach(item => {
+    item.style.display = item.dataset.value.toLowerCase().includes(q) ? 'flex' : 'none';
+  });
+}
+
+function selectCountryOption(id, value){
+  document.getElementById(id).value = value;
+  const code = COUNTRY_CODES[value.toLowerCase()];
+  document.getElementById(id+'-btn-label').innerHTML = code ? flagImgTag(code,16)+' '+value : value;
+  document.getElementById(id+'-panel').classList.remove('open');
+}
+
+function resetCountryDropdown(id){
+  const input = document.getElementById(id);
+  if(input) input.value='';
+  const label = document.getElementById(id+'-btn-label');
+  if(label) label.textContent='— Select —';
+}
+
+// Legacy free-text data (pre-dropdown) that doesn't match a known country/demonym:
+// keep it visible in the button instead of silently blanking it.
+function setSelectPreservingLegacy(idOrEl, value){
+  const id = typeof idOrEl === 'string' ? idOrEl : idOrEl.id;
+  const input = document.getElementById(id);
+  if(!input) return;
+  if(!value){ resetCountryDropdown(id); return; }
+  input.value = value;
+  const code = COUNTRY_CODES[value.toLowerCase()];
+  const label = document.getElementById(id+'-btn-label');
+  if(label) label.innerHTML = code ? flagImgTag(code,16)+' '+value : value+' <span style="opacity:.55">(unlisted)</span>';
+}
+
+document.addEventListener('click', function(e){
+  document.querySelectorAll('.cdd').forEach(cdd => {
+    if(!cdd.contains(e.target)) {
+      const panel = cdd.querySelector('.cdd-panel.open');
+      if(panel) panel.classList.remove('open');
+    }
+  });
+});
+
+const ICONS = {
+  briefcase:    `<svg class="ic" viewBox="0 0 16 16"><rect x="1.5" y="4.8" width="13" height="8.7" rx="1.2"/><path d="M5.5 4.8V3.2a1.2 1.2 0 011.2-1.2h2.6a1.2 1.2 0 011.2 1.2v1.6"/><line x1="1.5" y1="8.6" x2="14.5" y2="8.6"/></svg>`,
+  plus: `<svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>`,
+  edit: `<svg class="ic" viewBox="0 0 16 16"><path d="M11 2.3l2.7 2.7-8 8H3v-2.7z"/><path d="M9.5 3.8l2.7 2.7"/></svg>`,
+  trash: `<svg class="ic" viewBox="0 0 16 16"><path d="M3 4h10M6 4V2.2h4V4M5 4l.8 9.5A1 1 0 006.8 14.5h2.4a1 1 0 001-.9L11 4"/></svg>`,
+  check: `<svg class="ic" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 4.5"/></svg>`,
+  checkcircle: `<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.3"/><path d="M5.2 8.2l2 2 3.6-4"/></svg>`,
+  users: `<svg class="ic" viewBox="0 0 16 16"><circle cx="6.2" cy="5.8" r="2.3"/><path d="M1.8 14c0-2.6 1.9-4.3 4.4-4.3s4.4 1.7 4.4 4.3"/><circle cx="12" cy="6.3" r="1.7"/><path d="M10.3 9.9c1.7.4 2.9 1.8 3 3.9"/></svg>`,
+  plane: `<svg class="ic" viewBox="0 0 16 16"><path d="M14 2L1.6 7.6l4.3 1.7M14 2L8.2 14l-2.3-4.7M14 2L5.9 9.6"/></svg>`,
+  dollar: `<svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="1" x2="8" y2="15"/><path d="M11 4.6c0-1.4-1.4-2.4-3-2.4S5 3.2 5 4.6c0 3 6 1.4 6 4.4 0 1.4-1.4 2.4-3 2.4s-3-1-3-2.4"/></svg>`,
+  search: `<svg class="ic" viewBox="0 0 16 16"><circle cx="6.6" cy="6.6" r="4.4"/><line x1="9.9" y1="9.9" x2="14" y2="14"/></svg>`,
+  flag: `<svg class="ic" viewBox="0 0 16 16"><line x1="4" y1="1.5" x2="4" y2="14.5"/><path d="M4 2.2h8l-2.2 2.6L12 7.4H4"/></svg>`,
+  save: `<svg class="ic" viewBox="0 0 16 16"><path d="M2.5 2h8l3 3v9h-11z"/><path d="M4.7 2v4h5.6V2"/><rect x="4.7" y="9" width="5.6" height="4"/></svg>`,
+  idcard: `<svg class="ic" viewBox="0 0 16 16"><rect x="1.3" y="3.2" width="13.4" height="9.6" rx="1.4"/><circle cx="4.9" cy="7.4" r="1.4"/><line x1="8.6" y1="6.4" x2="12.6" y2="6.4"/><line x1="8.6" y1="8.7" x2="12.6" y2="8.7"/><line x1="3.1" y1="11" x2="7" y2="11"/></svg>`,
+  globe: `<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.3"/><line x1="1.7" y1="8" x2="14.3" y2="8"/><path d="M8 1.7c2.1 1.9 2.1 10.7 0 12.6M8 1.7c-2.1 1.9-2.1 10.7 0 12.6"/></svg>`,
+  clipboard: `<svg class="ic" viewBox="0 0 16 16"><rect x="3" y="2.6" width="10" height="11.6" rx="1.2"/><rect x="5.5" y="1.1" width="5" height="2.4" rx="0.6"/><line x1="5.5" y1="7.3" x2="10.5" y2="7.3"/><line x1="5.5" y1="9.8" x2="10.5" y2="9.8"/></svg>`,
+  card: `<svg class="ic" viewBox="0 0 16 16"><rect x="1.3" y="3.6" width="13.4" height="8.8" rx="1.2"/><line x1="1.3" y1="6.4" x2="14.7" y2="6.4"/></svg>`,
+  filetext: `<svg class="ic" viewBox="0 0 16 16"><path d="M4 1.4h4.8l3.2 3.2v10H4z"/><line x1="6" y1="8.2" x2="10" y2="8.2"/><line x1="6" y1="10.6" x2="10" y2="10.6"/></svg>`,
+  file: `<svg class="ic" viewBox="0 0 16 16"><path d="M4 1.4h4.8l3.2 3.2v10H4z"/><path d="M8.8 1.4v3.2H12"/></svg>`,
+  shield: `<svg class="ic" viewBox="0 0 16 16"><path d="M8 1.4l5.4 1.9v3.9c0 3.9-2.4 6.3-5.4 7.3-3-1-5.4-3.4-5.4-7.3V3.3z"/><path d="M5.4 8l1.8 1.8L11 6"/></svg>`,
+  grid: `<svg class="ic" viewBox="0 0 16 16"><rect x="1.4" y="1.4" width="5.2" height="5.2"/><rect x="9.4" y="1.4" width="5.2" height="5.2"/><rect x="1.4" y="9.4" width="5.2" height="5.2"/><rect x="9.4" y="9.4" width="5.2" height="5.2"/></svg>`,
+  folder: `<svg class="ic" viewBox="0 0 16 16"><path d="M1.4 4.2h4.6l1.5 1.8h7v7.8h-13.1z"/></svg>`,
+  eye: `<svg class="ic" viewBox="0 0 16 16"><path d="M1 8s2.7-4.8 7-4.8S15 8 15 8s-2.7 4.8-7 4.8S1 8 1 8z"/><circle cx="8" cy="8" r="1.9"/></svg>`,
+  mappin: `<svg class="ic" viewBox="0 0 16 16"><path d="M8 14.6s5-4.6 5-8.6a5 5 0 10-10 0c0 4 5 8.6 5 8.6z"/><circle cx="8" cy="6" r="1.7"/></svg>`,
+  user: `<svg class="ic" viewBox="0 0 16 16"><circle cx="8" cy="5.4" r="3"/><path d="M2 14.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/></svg>`,
+  alert: `<svg class="ic" viewBox="0 0 16 16"><path d="M8 1.6l7 12.6H1z"/><line x1="8" y1="6.2" x2="8" y2="9.6"/><line x1="8" y1="11.6" x2="8" y2="11.7"/></svg>`,
+  x: `<svg class="ic" viewBox="0 0 16 16"><line x1="3.2" y1="3.2" x2="12.8" y2="12.8"/><line x1="12.8" y1="3.2" x2="3.2" y2="12.8"/></svg>`
+};
+  // ── DATA ──────────────────────────────────────────────────────────────
+  let clients      = JSON.parse(localStorage.getItem('rmc_clients_v2')       || '[]');
+  let agents       = JSON.parse(localStorage.getItem('rmc_agents_v1')        || '[]');
+  let agentClients = JSON.parse(localStorage.getItem('rmc_agent_clients_v1') || '{}');
+
+  function saveClients()      { localStorage.setItem('rmc_clients_v2',       JSON.stringify(clients)); }
+  function saveAgents()       { localStorage.setItem('rmc_agents_v1',        JSON.stringify(agents)); }
+  function saveAgentClients() { localStorage.setItem('rmc_agent_clients_v1', JSON.stringify(agentClients)); }
+
+  const STATUS_MAP = {
+    review:    {label:'Under Review',               dot:'#7b5ea7'},
+    eligible:  {label:'Eligible — 1st Pay Pending', dot:'#c4621d'},
+    registered:{label:'Registered',                 dot:'#2b6cb0'},
+    offer:     {label:'Offer Letter Received',       dot:'#b5893a'},
+    wp:        {label:'Work Permit Received',         dot:'#2c7a7b'},
+    visa:      {label:'Visa Received',               dot:'#276749'},
+    complete:  {label:'Completed',                   dot:'#276749'},
+    pay2:      {label:'2nd Payment Pending',         dot:'#c53030'},
+    pay3:      {label:'3rd Payment Pending',         dot:'#c53030'},
+    payfinal:  {label:'Final Payment Pending',       dot:'#c53030'},
+  };
+  const PAY_STATUSES = ['eligible','pay2','pay3','payfinal'];
+
+  // ── PAGE ──────────────────────────────────────────────────────────────
+  function showPage(p) {
+    document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+    document.getElementById('page-'+p).classList.add('active');
+    document.querySelectorAll('.tab').forEach((el,i)=>
+      el.classList.toggle('active',['clients','add','agents'][i]===p));
+    if(p==='clients'){populateAgentFilter();renderCards();}
+    if(p==='add')    {populateAgentDropdown();}
+    if(p==='agents') {renderAgents();}
+  }
+
+  function populateAgentDropdown(){
+    const sel=document.getElementById('f-agent');
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— No Agent —</option>'+
+      agents.map(a=>`<option value="${a.id}">${a.name}${a.region?' ('+a.region+')':''}</option>`).join('');
+    sel.value=cur;
+  }
+  function populateAgentFilter(){}
+
+  // ── CLIENT FORM ───────────────────────────────────────────────────────
+  let editId=null, deleteTarget=null, deleteType='client', activeFilter='all';
+
+  function updateStatusDot(){
+    const v=document.getElementById('f-status').value;
+    document.getElementById('status-dot').style.background=v?STATUS_MAP[v].dot:'#9a9388';
+  }
+  function updateAcStatusDot(){
+    const v=document.getElementById('ac-status').value;
+    document.getElementById('ac-status-dot').style.background=v?STATUS_MAP[v].dot:'#9a9388';
+  }
+
+  function submitForm(){
+    const name=document.getElementById('f-name').value.trim();
+    const status=document.getElementById('f-status').value;
+    if(!name){showToast(ICONS.alert,"Please enter the client's full name");return;}
+    if(!status){showToast(ICONS.alert,'Please select a status');return;}
+    const agentId=document.getElementById('f-agent').value;
+    const client={
+      id:editId||Date.now().toString(), name, agentId,
+      passport:   document.getElementById('f-passport').value.trim(),
+      nationality:document.getElementById('f-nationality').value.trim(),
+      country:    document.getElementById('f-country').value.trim(),
+      visa:       document.getElementById('f-visa').value,
+      job:        document.getElementById('f-job').value.trim(),
+      total:      document.getElementById('f-total').value.trim(),
+      inst1:      document.getElementById('f-inst1').value.trim(),
+      inst2:      document.getElementById('f-inst2').value.trim(),
+      inst3:      document.getElementById('f-inst3').value.trim(),
+      instfinal:  document.getElementById('f-instfinal').value.trim(),
+      status,
+      notes:      document.getElementById('f-notes').value.trim(),
+      date:editId?(clients.find(c=>c.id===editId)||{}).date||new Date().toISOString():new Date().toISOString()
+    };
+    if(editId){clients=clients.map(c=>c.id===editId?client:c);showToast(ICONS.edit,'Client updated');cancelEdit();}
+    else{clients.unshift(client);showToast(ICONS.checkcircle,name+' added to batch');resetForm();}
+    saveClients();renderCards();updateStats();
+  }
+
+  function resetForm(){
+    ['f-name','f-passport','f-job','f-total','f-inst1','f-inst2','f-inst3','f-instfinal','f-notes']
+      .forEach(id=>document.getElementById(id).value='');
+    resetCountryDropdown('f-nationality');
+    resetCountryDropdown('f-country');
+    document.getElementById('f-visa').value='';
+    document.getElementById('f-status').value='';
+    document.getElementById('f-agent').value='';
+    updateStatusDot();
+  }
+
+  function cancelEdit(){
+    editId=null;
+    document.getElementById('form-title').textContent='Add New Client';
+    document.getElementById('form-mode-badge').textContent='New Entry';
+    document.getElementById('submit-icon').innerHTML=ICONS.plus;
+    document.getElementById('submit-label').textContent='Add Client';
+    document.getElementById('cancel-edit-btn').style.display='none';
+    document.getElementById('edit-preview-panel').style.display='none';
+    resetForm();
+  }
+
+  function editClient(id){
+    const c=clients.find(x=>x.id===id);if(!c)return;
+    editId=id;
+    document.getElementById('f-name').value=c.name||'';
+    document.getElementById('f-passport').value=c.passport||'';
+    setSelectPreservingLegacy(document.getElementById('f-nationality'), c.nationality||'');
+    setSelectPreservingLegacy(document.getElementById('f-country'), c.country||'');
+    document.getElementById('f-visa').value=c.visa||'';
+    document.getElementById('f-job').value=c.job||'';
+    document.getElementById('f-total').value=c.total||'';
+    document.getElementById('f-inst1').value=c.inst1||'';
+    document.getElementById('f-inst2').value=c.inst2||'';
+    document.getElementById('f-inst3').value=c.inst3||'';
+    document.getElementById('f-instfinal').value=c.instfinal||'';
+    document.getElementById('f-status').value=c.status||'';
+    document.getElementById('f-notes').value=c.notes||'';
+    populateAgentDropdown();
+    document.getElementById('f-agent').value=c.agentId||'';
+    updateStatusDot();
+    document.getElementById('form-title').textContent='Edit Client';
+    document.getElementById('form-mode-badge').textContent='Editing';
+    document.getElementById('submit-icon').innerHTML=ICONS.save;
+    document.getElementById('submit-label').textContent='Save Changes';
+    document.getElementById('cancel-edit-btn').style.display='block';
+    document.getElementById('edit-preview-panel').style.display='block';
+    showPage('add');
+    document.getElementById('form-panel').scrollIntoView({behavior:'smooth'});
+  }
+
+  function deleteClient(id){deleteTarget=id;deleteType='client';document.getElementById('del-modal-msg').textContent='This will permanently remove this client from the batch.';document.getElementById('del-modal').classList.add('open');}
+
+  function setFilter(el,f){
+    activeFilter=f;
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');renderCards();
+  }
+
+  function renderCards(){
+    const q=(document.getElementById('search-input').value||'').toLowerCase();
+    const list=clients.filter(c=>{
+      const s=[c.name,c.passport,c.nationality,c.country,c.visa,c.job].join(' ').toLowerCase();
+      const mQ=s.includes(q);
+      const mF=activeFilter==='all'?true:activeFilter==='pay'?PAY_STATUSES.includes(c.status):c.status===activeFilter;
+      return mQ&&mF;
+    });
+    const grid=document.getElementById('clients-grid');
+    if(!list.length){grid.innerHTML='<div class="empty-state"><div class="es-icon">${ICONS.folder}</div><p>No clients found.<br>Add your first client to get started.</p></div>';return;}
+    grid.innerHTML=list.map(c=>{
+      const sm=STATUS_MAP[c.status]||{label:c.status,dot:'#9a9388'};
+      const initials=c.name?c.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase():'?';
+      const dateStr=new Date(c.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+      const hasDetails=c.passport||c.job||c.total||c.inst1||c.inst2||c.inst3||c.instfinal||c.notes;
+      const agentName=c.agentId?(agents.find(a=>a.id===c.agentId)||{}).name:'';
+      return `
+      <div class="client-card s-${c.status}" id="card-${c.id}">
+        <div class="card-top">
+          <div class="card-avatar">${initials}</div>
+          <div class="card-info">
+            <div class="card-name">${c.name}</div>
+            <div class="card-meta">
+              ${c.passport?`<span>${ICONS.idcard} <b>${c.passport}</b></span>`:''}
+              ${c.nationality?`<span>${flagEmoji(c.nationality,ICONS.globe)} <b>${c.nationality}</b></span>`:''}
+              ${c.country?`<span>${flagEmoji(c.country,ICONS.plane)} <b>${c.country}</b></span>`:''}
+            </div>
+            <div class="card-tags">
+              ${c.visa?`<span class="tag tag-visa">${ICONS.shield} ${c.visa}</span>`:''}
+              ${c.job?`<span class="tag tag-job">${ICONS.briefcase} ${c.job}</span>`:''}
+              ${agentName?`<span class="tag tag-agent">${ICONS.users} ${agentName}</span>`:''}
+            </div>
+          </div>
+          <div class="card-right">
+            <span class="status-pill">${sm.label}</span>
+            <div class="card-date">${dateStr}</div>
+            <div class="card-actions">
+              ${hasDetails?`<button class="icon-btn" title="Details" onclick="toggleDetails('${c.id}')">${ICONS.eye}</button>`:''}
+              <button class="icon-btn" title="Edit" onclick="editClient('${c.id}')">${ICONS.edit}</button>
+              <button class="icon-btn del" title="Delete" onclick="deleteClient('${c.id}')">${ICONS.trash}</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-details">
+          ${c.passport?`<div class="detail-item"><div class="detail-label">Passport No</div><div class="detail-val">${c.passport}</div></div>`:''}
+          ${c.job?`<div class="detail-item"><div class="detail-label">Job</div><div class="detail-val">${c.job}</div></div>`:''}
+          ${c.total?`<div class="detail-item"><div class="detail-label">Total Package</div><div class="detail-val money">${c.total}</div></div>`:''}
+          ${c.inst1?`<div class="detail-item"><div class="detail-label">1st Installment</div><div class="detail-val money">${c.inst1}</div></div>`:''}
+          ${c.inst2?`<div class="detail-item"><div class="detail-label">2nd Installment</div><div class="detail-val money">${c.inst2}</div></div>`:''}
+          ${c.inst3?`<div class="detail-item"><div class="detail-label">3rd Installment</div><div class="detail-val money">${c.inst3}</div></div>`:''}
+          ${c.instfinal?`<div class="detail-item"><div class="detail-label">Final Installment</div><div class="detail-val money">${c.instfinal}</div></div>`:''}
+          ${agentName?`<div class="detail-item"><div class="detail-label">Agent</div><div class="detail-val">${ICONS.users} ${agentName}</div></div>`:''}
+          ${c.notes?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Notes</div><div class="detail-val italic">${c.notes}</div></div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function toggleDetails(id){document.getElementById('card-'+id).classList.toggle('expanded');}
+
+  function updateStats(){
+    document.getElementById('stat-total').textContent=clients.length;
+    document.getElementById('stat-review').textContent=clients.filter(c=>c.status==='review').length;
+    document.getElementById('stat-pay').textContent=clients.filter(c=>PAY_STATUSES.includes(c.status)).length;
+    document.getElementById('stat-complete').textContent=clients.filter(c=>c.status==='complete').length;
+  }
+
+  // ── AGENTS ────────────────────────────────────────────────────────────
+  function addAgent(){
+    const name=document.getElementById('ag-name').value.trim();
+    if(!name){showToast(ICONS.alert,'Please enter agent name');return;}
+    const total=parseInt(document.getElementById('ag-total').value)||0;
+    const used=parseInt(document.getElementById('ag-used').value)||0;
+    agents.unshift({id:Date.now().toString(),name,region:document.getElementById('ag-region').value.trim(),notes:document.getElementById('ag-notes').value.trim(),total,used,date:new Date().toISOString()});
+    saveAgents();
+    ['ag-name','ag-region','ag-total','ag-used','ag-notes'].forEach(id=>document.getElementById(id).value='');
+    showToast(ICONS.checkcircle,name+' added as agent');renderAgents();
+  }
+
+  function deleteAgent(id){deleteTarget=id;deleteType='agent';document.getElementById('del-modal-msg').textContent='This will permanently remove this agent and all their client records.';document.getElementById('del-modal').classList.add('open');}
+
+  function toggleAgentEdit(id){
+    const card=document.getElementById('ag-card-'+id);
+    card.classList.toggle('editing');
+    if(card.classList.contains('editing')){
+      const a=agents.find(x=>x.id===id);
+      card.querySelector('.ae-name').value=a.name||'';
+      card.querySelector('.ae-region').value=a.region||'';
+      card.querySelector('.ae-total').value=a.total||0;
+      card.querySelector('.ae-used').value=a.used||0;
+      card.querySelector('.ae-notes').value=a.notes||'';
+    }
+  }
+
+  function saveAgentEdit(id){
+    const card=document.getElementById('ag-card-'+id);
+    const name=card.querySelector('.ae-name').value.trim();
+    if(!name){showToast(ICONS.alert,'Agent name required');return;}
+    const total=parseInt(card.querySelector('.ae-total').value)||0;
+    const used=parseInt(card.querySelector('.ae-used').value)||0;
+    agents=agents.map(a=>a.id===id?{...a,name,region:card.querySelector('.ae-region').value.trim(),total,used,notes:card.querySelector('.ae-notes').value.trim()}:a);
+    saveAgents();showToast(ICONS.edit,'Agent updated');renderAgents();
+  }
+
+  function renderAgents(){
+    const grid=document.getElementById('agents-grid');
+    const totalSlots=agents.reduce((s,a)=>s+a.total,0);
+    const usedSlots=agents.reduce((s,a)=>s+a.used,0);
+    document.getElementById('ag-stat-agents').textContent=agents.length;
+    document.getElementById('ag-stat-total').textContent=totalSlots;
+    document.getElementById('ag-stat-free').textContent=totalSlots-usedSlots;
+    if(!agents.length){grid.innerHTML='<div class="empty-state"><div class="es-icon">${ICONS.users}</div><p>No agents yet.<br>Add your first agent above.</p></div>';return;}
+    grid.innerHTML=agents.map(a=>{
+      const free=Math.max(0,a.total-a.used);
+      const pct=a.total>0?Math.min(100,Math.round((a.used/a.total)*100)):0;
+      const initials=a.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      const acList=agentClients[a.id]||[];
+      const mainLinked=clients.filter(c=>c.agentId===a.id);
+      const totalClients=acList.length+mainLinked.length;
+      return `
+      <div class="agent-card" id="ag-card-${a.id}">
+        <div class="agent-card-header">
+          <div class="agent-avatar">${initials}</div>
+          <div class="agent-card-actions">
+            <button class="icon-btn" title="Edit" onclick="toggleAgentEdit('${a.id}')">${ICONS.edit}</button>
+            <button class="icon-btn del" title="Delete" onclick="deleteAgent('${a.id}')">${ICONS.trash}</button>
+          </div>
+        </div>
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-meta">${a.region?ICONS.mappin+' '+a.region:'&nbsp;'} &nbsp;·&nbsp; ${ICONS.users} ${totalClients} client${totalClients!==1?'s':''}</div>
+        <div class="slots-display">
+          <div class="slot-box total"><div class="slot-num">${a.total}</div><div class="slot-label">Total</div></div>
+          <div class="slot-box used"><div class="slot-num">${a.used}</div><div class="slot-label">Used</div></div>
+          <div class="slot-box free"><div class="slot-num">${free}</div><div class="slot-label">Free</div></div>
+        </div>
+        <div class="slot-bar"><div class="slot-bar-fill" style="width:${pct}%"></div></div>
+        ${a.notes?`<div style="font-size:11.5px;color:var(--ink-muted);margin-top:10px;font-style:italic">${a.notes}</div>`:''}
+        <div class="agent-btns">
+          <button class="agent-btn agent-btn-clients" onclick="openAgentClients('${a.id}')">${ICONS.users} View Clients (${totalClients})</button>
+          <button class="agent-btn agent-btn-add" onclick="openAddAgentClient('${a.id}')"><svg class="ic" viewBox="0 0 16 16"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg> Add Client</button>
+        </div>
+        <div class="agent-edit-form">
+          <div class="form-group"><label>Name</label><input class="ae-name" type="text" placeholder="Agent name"></div>
+          <div class="form-group"><label>Region</label><input class="ae-region" type="text" placeholder="Region"></div>
+          <div class="agent-edit-row">
+            <div class="form-group"><label>Total Slots</label><input class="ae-total" type="number" min="0" placeholder="0"></div>
+            <div class="form-group"><label>Slots Used</label><input class="ae-used" type="number" min="0" placeholder="0"></div>
+          </div>
+          <div class="form-group"><label>Notes</label><input class="ae-notes" type="text" placeholder="Notes"></div>
+          <div style="display:flex;gap:8px">
+            <button class="edit-submit-btn" style="flex:1" onclick="saveAgentEdit('${a.id}')">${ICONS.save} Save</button>
+            <button class="edit-cancel-btn" onclick="toggleAgentEdit('${a.id}')">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── SLIDE PANEL ───────────────────────────────────────────────────────
+  let currentAgentId=null;
+
+  function openAgentClients(agentId){
+    currentAgentId=agentId;
+    const a=agents.find(x=>x.id===agentId);if(!a)return;
+    const acList=agentClients[agentId]||[];
+    const mainLinked=clients.filter(c=>c.agentId===agentId);
+    const allClients=[...acList,...mainLinked.map(c=>({...c,_fromMain:true}))];
+    document.getElementById('slide-title').textContent=a.name+"'s Clients";
+    document.getElementById('slide-subtitle').textContent=allClients.length+' client'+(allClients.length!==1?'s':'')+(a.region?' · '+a.region:'');
+    const body=document.getElementById('slide-body');
+    if(!allClients.length){
+      body.innerHTML=`<div class="empty-state"><div class="es-icon">${ICONS.user}</div><p>No clients yet for this agent.<br>Click "Add Client" on the agent card to add one.</p></div>`;
+    } else {
+      body.innerHTML=allClients.map(c=>{
+        const sm=STATUS_MAP[c.status]||{label:c.status||'—',dot:'#9a9388'};
+        const initials=c.name?c.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase():'?';
+        const source=c._fromMain?'<span style="font-size:9px;color:var(--ink-muted);margin-left:4px">(main batch)</span>':'';
+        return `
+        <div class="mini-client-card s-${c.status||'review'}">
+          <div class="mini-card-top">
+            <div class="mini-avatar card-avatar s-${c.status||'review'}">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="mini-name">${c.name} ${source}</div>
+              <div class="mini-meta">
+                ${c.passport?ICONS.idcard+' '+c.passport+' &nbsp;':''}
+                ${c.nationality?flagEmoji(c.nationality,ICONS.globe)+' '+c.nationality+' &nbsp;':''}
+                ${c.country?flagEmoji(c.country,ICONS.plane)+' '+c.country:''}
+              </div>
+              ${c.visa||c.job?`<div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap">
+                ${c.visa?`<span class="tag tag-visa">${ICONS.shield} ${c.visa}</span>`:''}
+                ${c.job?`<span class="tag tag-job">${ICONS.briefcase} ${c.job}</span>`:''}
+              </div>`:''}
+            </div>
+            <div class="mini-right">
+              <span class="mini-status status-pill s-${c.status||'review'}">${sm.label}</span>
+              ${!c._fromMain?`<div class="mini-actions">
+                <button class="icon-btn" title="Edit" onclick="editAgentClient('${agentId}','${c.id}')">${ICONS.edit}</button>
+                <button class="icon-btn del" title="Delete" onclick="deleteAgentClient('${agentId}','${c.id}')">${ICONS.trash}</button>
+              </div>`:'<div style="font-size:10px;color:var(--ink-muted);margin-top:4px">Edit in main batch</div>'}
+            </div>
+          </div>
+          ${c.total||c.inst1?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:14px;flex-wrap:wrap">
+            ${c.total?`<span style="font-size:11px;color:var(--ink-muted)">Total: <b style="color:var(--gold-dark);font-family:'JetBrains Mono',monospace">${c.total}</b></span>`:''}
+            ${c.inst1?`<span style="font-size:11px;color:var(--ink-muted)">1st: <b style="color:var(--gold-dark);font-family:'JetBrains Mono',monospace">${c.inst1}</b></span>`:''}
+            ${c.inst2?`<span style="font-size:11px;color:var(--ink-muted)">2nd: <b style="color:var(--gold-dark);font-family:'JetBrains Mono',monospace">${c.inst2}</b></span>`:''}
+            ${c.instfinal?`<span style="font-size:11px;color:var(--ink-muted)">Final: <b style="color:var(--gold-dark);font-family:'JetBrains Mono',monospace">${c.instfinal}</b></span>`:''}
+          </div>`:''}
+        </div>`;
+      }).join('');
+    }
+    document.getElementById('slide-overlay').classList.add('open');
+  }
+
+  function closeSlide(e){if(e.target===document.getElementById('slide-overlay'))closeSlideBtn();}
+  function closeSlideBtn(){document.getElementById('slide-overlay').classList.remove('open');currentAgentId=null;}
+
+  // ── AGENT CLIENT MODAL ─────────────────────────────────────────────────
+  let acEditId=null, acAgentId=null;
+
+  function openAddAgentClient(agentId){
+    acAgentId=agentId;acEditId=null;
+    const a=agents.find(x=>x.id===agentId);
+    document.getElementById('ac-modal-title').innerHTML=ICONS.plus+' Add Client — '+(a?a.name:'Agent');
+    resetAcForm();document.getElementById('ac-modal').classList.add('open');
+  }
+
+  function editAgentClient(agentId,clientId){
+    acAgentId=agentId;acEditId=clientId;
+    const list=agentClients[agentId]||[];
+    const c=list.find(x=>x.id===clientId);if(!c)return;
+    const a=agents.find(x=>x.id===agentId);
+    document.getElementById('ac-modal-title').innerHTML=ICONS.edit+' Edit Client — '+(a?a.name:'Agent');
+    document.getElementById('ac-name').value=c.name||'';
+    document.getElementById('ac-passport').value=c.passport||'';
+    setSelectPreservingLegacy(document.getElementById('ac-nationality'), c.nationality||'');
+    setSelectPreservingLegacy(document.getElementById('ac-country'), c.country||'');
+    document.getElementById('ac-visa').value=c.visa||'';
+    document.getElementById('ac-job').value=c.job||'';
+    document.getElementById('ac-total').value=c.total||'';
+    document.getElementById('ac-inst1').value=c.inst1||'';
+    document.getElementById('ac-inst2').value=c.inst2||'';
+    document.getElementById('ac-inst3').value=c.inst3||'';
+    document.getElementById('ac-instfinal').value=c.instfinal||'';
+    document.getElementById('ac-status').value=c.status||'';
+    document.getElementById('ac-notes').value=c.notes||'';
+    updateAcStatusDot();document.getElementById('ac-modal').classList.add('open');
+  }
+
+  function deleteAgentClient(agentId,clientId){
+    deleteTarget={agentId,clientId};deleteType='agentclient';
+    document.getElementById('del-modal-msg').textContent='This will permanently remove this client from the agent.';
+    document.getElementById('del-modal').classList.add('open');
+  }
+
+  function saveAgentClient(){
+    const name=document.getElementById('ac-name').value.trim();
+    const status=document.getElementById('ac-status').value;
+    if(!name){showToast(ICONS.alert,"Please enter client's name");return;}
+    if(!status){showToast(ICONS.alert,'Please select a status');return;}
+    const c={
+      id:acEditId||Date.now().toString(), name,
+      passport:   document.getElementById('ac-passport').value.trim(),
+      nationality:document.getElementById('ac-nationality').value.trim(),
+      country:    document.getElementById('ac-country').value.trim(),
+      visa:       document.getElementById('ac-visa').value,
+      job:        document.getElementById('ac-job').value.trim(),
+      total:      document.getElementById('ac-total').value.trim(),
+      inst1:      document.getElementById('ac-inst1').value.trim(),
+      inst2:      document.getElementById('ac-inst2').value.trim(),
+      inst3:      document.getElementById('ac-inst3').value.trim(),
+      instfinal:  document.getElementById('ac-instfinal').value.trim(),
+      status,
+      notes:      document.getElementById('ac-notes').value.trim(),
+      date:acEditId?((agentClients[acAgentId]||[]).find(x=>x.id===acEditId)||{}).date||new Date().toISOString():new Date().toISOString()
+    };
+    if(!agentClients[acAgentId])agentClients[acAgentId]=[];
+    if(acEditId){agentClients[acAgentId]=agentClients[acAgentId].map(x=>x.id===acEditId?c:x);showToast(ICONS.edit,'Client updated');}
+    else{agentClients[acAgentId].unshift(c);showToast(ICONS.checkcircle,name+' added to agent');}
+    saveAgentClients();closeAcModal();renderAgents();
+    if(currentAgentId===acAgentId)openAgentClients(acAgentId);
+  }
+
+  function resetAcForm(){
+    ['ac-name','ac-passport','ac-job','ac-total','ac-inst1','ac-inst2','ac-inst3','ac-instfinal','ac-notes']
+      .forEach(id=>document.getElementById(id).value='');
+    resetCountryDropdown('ac-nationality');
+    resetCountryDropdown('ac-country');
+    document.getElementById('ac-visa').value='';
+    document.getElementById('ac-status').value='';
+    updateAcStatusDot();
+  }
+  function closeAcModal(){document.getElementById('ac-modal').classList.remove('open');acEditId=null;acAgentId=null;}
+
+  // ── DELETE ────────────────────────────────────────────────────────────
+  function closeDelModal(){document.getElementById('del-modal').classList.remove('open');deleteTarget=null;}
+  function confirmDelete(){
+    if(deleteType==='client'){
+      clients=clients.filter(c=>c.id!==deleteTarget);saveClients();renderCards();updateStats();showToast(ICONS.trash,'Client removed');
+    }else if(deleteType==='agent'){
+      delete agentClients[deleteTarget];saveAgentClients();
+      agents=agents.filter(a=>a.id!==deleteTarget);
+      clients=clients.map(c=>c.agentId===deleteTarget?{...c,agentId:''}:c);
+      saveAgents();saveClients();renderAgents();showToast(ICONS.trash,'Agent removed');
+    }else if(deleteType==='agentclient'){
+      const {agentId,clientId}=deleteTarget;
+      agentClients[agentId]=(agentClients[agentId]||[]).filter(c=>c.id!==clientId);
+      saveAgentClients();renderAgents();
+      if(currentAgentId===agentId)openAgentClients(agentId);
+      showToast(ICONS.trash,'Client removed from agent');
+    }
+    closeDelModal();
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────────────
+  function showToast(icon,msg){
+    const t=document.getElementById('toast');
+    document.getElementById('toast-icon').textContent=icon;
+    document.getElementById('toast-msg').textContent=msg;
+    t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+  }
+
+  // ── SEED ──────────────────────────────────────────────────────────────
+  if(clients.length===0){
+    clients=[
+      {id:'1',name:'Arjun Sharma',passport:'J8823411',nationality:'Indian',country:'Canada',visa:'Skilled Worker',job:'Software Engineer',total:'AED 28,000',inst1:'AED 9,000',inst2:'AED 7,000',inst3:'AED 7,000',instfinal:'AED 5,000',status:'offer',agentId:'a2',notes:'Offer letter from Toronto firm. IELTS 7.5.',date:'2025-03-15T08:00:00'},
+      {id:'2',name:'Fatima Al Zahra',passport:'AE291847',nationality:'Emirati',country:'UK',visa:'Investor Visa',job:'Business Owner',total:'AED 45,000',inst1:'AED 15,000',inst2:'AED 12,000',inst3:'AED 10,000',instfinal:'AED 8,000',status:'eligible',agentId:'',notes:'1st payment due end of month.',date:'2025-03-18T10:00:00'},
+      {id:'3',name:'Muhammad Khalid',passport:'P7741209',nationality:'Pakistani',country:'Germany',visa:'Work Permit',job:'Electrician',total:'AED 22,000',inst1:'AED 7,000',inst2:'AED 6,000',inst3:'AED 5,000',instfinal:'AED 4,000',status:'complete',agentId:'a1',notes:'Visa approved, travel booked.',date:'2025-03-01T09:00:00'},
+      {id:'4',name:'Priya Nair',passport:'K5512988',nationality:'Indian',country:'Australia',visa:'Permanent Residency',job:'Nurse',total:'AED 32,000',inst1:'AED 10,000',inst2:'AED 8,000',inst3:'AED 8,000',instfinal:'AED 6,000',status:'pay2',agentId:'a2',notes:'Work permit received.',date:'2025-03-20T11:00:00'},
+    ];
+    saveClients();
+  }
+  if(agents.length===0){
+    agents=[
+      {id:'a1',name:'James Okafor',region:'Lagos, Nigeria',total:25,used:18,notes:'Primary West Africa agent',date:'2025-01-10T08:00:00'},
+      {id:'a2',name:'Riya Mehta',region:'Mumbai, India',total:30,used:12,notes:'South Asia specialist',date:'2025-01-15T08:00:00'},
+    ];
+    saveAgents();
+  }
+
+  populateAllCountrySelects();
+  renderCards(); updateStats();
+</script>
+</body>
+</html>
